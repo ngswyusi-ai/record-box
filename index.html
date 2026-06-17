@@ -1976,9 +1976,8 @@
       `;
     }
 
-    function renderRecords() {
+    function filteredRecords() {
       let records = [...state.records];
-      const hasRecords = records.length > 0;
       if (state.events.some(event => event.id === recordFilter)) records = records.filter(record => record.eventId === recordFilter);
       if (yearFilter !== "all") records = records.filter(record => record.measuredAt.startsWith(yearFilter));
       if (categoryFilter !== "all") records = records.filter(record => !record.isBaseline && record.recordCategory === categoryFilter);
@@ -1987,11 +1986,29 @@
         const query = competitionSearch.trim().toLowerCase();
         records = records.filter(record => competitionName(record).toLowerCase().includes(query));
       }
-      records = sortRecords(records);
+      return sortRecords(records);
+    }
+
+    function recordListHtml(records, hasRecords = state.records.length > 0) {
+      return hasRecords
+        ? records.length ? records.map(recordCard).join("") : noFilteredRecordsState()
+        : emptyRecordsState();
+    }
+
+    function updateRecordResults() {
+      const list = document.getElementById("recordListGrid");
+      if (list) list.innerHTML = recordListHtml(filteredRecords());
+      const summary = document.getElementById("filterSummaryText");
+      if (summary) summary.textContent = filterSummaryText();
+    }
+
+    function renderRecords() {
+      const records = filteredRecords();
+      const hasRecords = state.records.length > 0;
       const recordTools = hasRecords ? `
         <div class="record-tools">
           <label class="record-search">
-            <input id="competitionSearchTop" value="${escapeHtml(competitionSearch)}" oninput="setCompetitionSearch(this.value)" placeholder="大会名で検索">
+            <input id="competitionSearchTop" value="${escapeHtml(competitionSearch)}" oninput="setCompetitionSearch(this.value)" placeholder="大会名で検索" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
           </label>
           <div class="record-controls">
             <label class="sort-control">並び順
@@ -2003,16 +2020,13 @@
             </label>
             <button class="secondary" onclick="openFilterDialog()">絞り込み</button>
           </div>
-          <div class="filter-summary-text">${filterSummaryText()}</div>
+          <div class="filter-summary-text" id="filterSummaryText">${filterSummaryText()}</div>
         </div>
       ` : "";
-      const recordList = hasRecords
-        ? records.length ? records.map(recordCard).join("") : noFilteredRecordsState()
-        : emptyRecordsState();
       document.getElementById("recordsView").innerHTML = `
         <div class="screen-kicker">記録一覧</div>
         ${recordTools}
-        <div class="grid" style="margin-top:10px">${recordList}</div>
+        <div class="grid" id="recordListGrid" style="margin-top:10px">${recordListHtml(records, hasRecords)}</div>
       `;
     }
 
@@ -2314,12 +2328,7 @@
 
     function setCompetitionSearch(value) {
       competitionSearch = value;
-      renderRecords();
-      const input = document.getElementById("competitionSearchTop");
-      if (input) {
-        input.focus();
-        input.setSelectionRange(input.value.length, input.value.length);
-      }
+      updateRecordResults();
     }
 
     function setSortOrder(value) {
