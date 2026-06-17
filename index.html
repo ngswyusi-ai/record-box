@@ -1,0 +1,3208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RecordBOX</title>
+  <meta name="description" content="大会や練習測定の記録を残して、自己ベストの更新を見つけるための個人用トラッカーです。">
+  <meta name="theme-color" content="#2f4738">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="RecordBOX">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f2a22'/%3E%3Cpath d='M22 25v-7c0-3 2-5 5-5h10c3 0 5 2 5 5v7' fill='none' stroke='%23f7edda' stroke-width='4' stroke-linecap='round'/%3E%3Crect x='19' y='24' width='26' height='25' rx='6' fill='none' stroke='%23f7edda' stroke-width='4'/%3E%3Cpath d='M27 36h10' stroke='%23b78936' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --primary: #1f2a22;
+      --primary-dark: #111712;
+      --primary-soft: #eef2ef;
+      --action: #2f4738;
+      --ink: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(60, 60, 67, .18);
+      --soft: #f5f5f7;
+      --white: #ffffff;
+      --pb: #b78936;
+      --pb-soft: #fbf1df;
+      --pb-text: #73531f;
+      --pb-line: #dfc184;
+      --cream: #f7edda;
+      --success: #1f7a5b;
+      --danger: #ff3b30;
+      --danger-soft: #fff0ef;
+      --danger-line: #f1c8c5;
+      --shadow: none;
+      --shadow-subtle: none;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--soft);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+      font-feature-settings: "tnum";
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid rgba(183, 137, 54, .32);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(100%, 520px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 14px 16px 96px;
+    }
+
+    .splash {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: var(--cream);
+      transition: opacity .32s ease, visibility .32s ease;
+    }
+
+    .splash.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-inner {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      transform: translateY(-10px);
+    }
+
+    .splash .mark {
+      width: 58px;
+      height: 58px;
+      border-radius: 17px;
+      background: rgba(255, 255, 255, .10);
+    }
+
+    .splash .mark-box {
+      width: 30px;
+      height: 27px;
+    }
+
+    .splash .mark-box::before {
+      top: -9px;
+      height: 10px;
+    }
+
+    .splash-title {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--action);
+      border: 0;
+      box-shadow: none;
+    }
+
+    .mark-box {
+      position: relative;
+      width: 20px;
+      height: 18px;
+      border: 2px solid var(--cream);
+      border-radius: 4px;
+    }
+
+    .mark-box::before {
+      content: "";
+      position: absolute;
+      left: 3px;
+      right: 3px;
+      top: -6px;
+      height: 7px;
+      border: 2px solid var(--cream);
+      border-bottom: 0;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .mark-box::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      top: 7px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--pb);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 21px; line-height: 1.08; font-weight: 600; letter-spacing: -0.01em; }
+    h2 { font-size: 19px; line-height: 1.2; font-weight: 600; letter-spacing: 0; }
+    h3 { font-size: 16px; line-height: 1.3; font-weight: 500; }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .icon-btn, .primary, .secondary, .danger {
+      border: 0;
+      border-radius: 12px;
+      min-height: 42px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .icon-btn {
+      width: 42px;
+      padding: 0;
+      background: var(--white);
+      border: 1px solid var(--line);
+      color: var(--primary);
+      box-shadow: none;
+    }
+
+    .primary { background: var(--primary); color: var(--white); }
+    .secondary { background: rgba(118, 118, 128, .12); color: var(--primary); border: 0; box-shadow: none; }
+    .danger { background: var(--danger-soft); color: var(--danger); }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+      box-shadow: none;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-settings {
+      width: 38px;
+      min-height: 38px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      padding: 20px;
+      color: var(--cream);
+      background: var(--primary);
+      border: 0;
+      box-shadow: none;
+    }
+
+    .screen-kicker {
+      min-height: 15px;
+      margin: 0 2px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .track-lines {
+      position: absolute;
+      inset: auto -20px -42px -20px;
+      height: 120px;
+      transform: rotate(-4deg);
+      display: none;
+    }
+
+    .hero > *:not(.track-lines) { position: relative; }
+    .hero-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hero-label { color: rgba(247, 243, 234, .68); font-size: 12px; font-weight: 400; }
+    .hero-title {
+      margin-top: 3px;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+    .hero-main {
+      margin-top: 18px;
+    }
+    .event-name { color: rgba(247, 243, 234, .72); font-size: 14px; margin-top: 6px; }
+    .pb-number { font-size: 54px; line-height: .9; font-weight: 600; letter-spacing: 0; }
+    .pb-unit { color: rgba(247, 243, 234, .72); font-size: 16px; margin-left: 2px; }
+    .hero-insight {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .hero-insight-item {
+      min-height: 60px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .10);
+    }
+    .hero-insight-item span {
+      display: block;
+      color: rgba(247, 243, 234, .68);
+      font-size: 11px;
+    }
+    .hero-insight-item strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      color: #ffffff;
+    }
+    .hero-pb-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .hero-pb-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 54px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .10);
+    }
+    .hero-pb-row span {
+      display: block;
+      color: rgba(247, 243, 234, .66);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+    .hero-pb-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+    .hero-pb-value {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0;
+      white-space: nowrap;
+      text-align: right;
+    }
+    .hero-empty {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .10);
+      color: rgba(247, 243, 234, .76);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .hero-empty strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .action-row button { min-height: 44px; }
+    .hero .primary { background: var(--primary); color: var(--white); }
+    .hero .secondary { background: rgba(118, 118, 128, .10); color: var(--primary); border: 0; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 28px 2px 10px;
+    }
+
+    .section-head h2 {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: .01em;
+    }
+    .link-btn {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 400;
+      padding: 8px;
+    }
+
+    .grid { display: grid; gap: 8px; }
+
+    .card {
+      border: 0;
+      border-radius: 18px;
+      background: var(--white);
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .record-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 14px;
+      align-items: center;
+    }
+    .record-card.is-pb {
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .date {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: .02em;
+    }
+    .record-title { font-size: 14px; font-weight: 500; margin-top: 3px; }
+    .record-meta { color: var(--muted); font-size: 12px; margin-top: 5px; line-height: 1.45; }
+    .record-value {
+      font-size: 23px;
+      font-weight: 400;
+      text-align: right;
+      white-space: nowrap;
+      letter-spacing: 0;
+    }
+    .badges { display: flex; flex-wrap: wrap; gap: 5px; grid-column: 1 / -1; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      border: 0;
+      font-size: 10px;
+      font-weight: 400;
+      background: var(--soft);
+      color: var(--muted);
+    }
+
+    .badge.pb { background: var(--pb-soft); color: var(--pb-text); }
+    .badge.warn { background: var(--danger-soft); color: var(--danger); }
+
+    .event-row, .goal-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .event-row button, .goal-row button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 0;
+      color: inherit;
+    }
+
+    .event-stat { text-align: right; font-weight: 500; }
+    .event-stat small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; margin-top: 3px; }
+    .progress {
+      overflow: hidden;
+      height: 8px;
+      margin-top: 10px;
+      border-radius: 999px;
+      background: rgba(118, 118, 128, .18);
+    }
+
+    .progress span { display: block; height: 100%; border-radius: 999px; background: var(--success); }
+
+    .tabs, .filters {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .filter-block {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      min-height: 40px;
+      border-radius: 8px;
+      background: var(--white);
+    }
+
+    .record-tools {
+      display: grid;
+      gap: 9px;
+      margin: 0 0 12px;
+    }
+
+    .record-search input {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 8px;
+      background: var(--white);
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .record-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .sort-control {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+      padding: 0 10px;
+      min-height: 40px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .sort-control select {
+      min-height: 34px;
+      padding: 0 22px 0 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .filter-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 12px;
+    }
+
+    .filter-summary-text {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .filter-sheet {
+      width: min(100%, 520px);
+      max-height: min(82dvh, 680px);
+      margin: auto auto 0;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .filter-sheet .modal-body {
+      max-height: min(82dvh, 680px);
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    .tab, .filter {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 0 13px;
+      color: var(--muted);
+      background: var(--white);
+      font-weight: 500;
+    }
+
+    .tab.active, .filter.active {
+      color: var(--primary);
+      border-color: transparent;
+      background: var(--primary-soft);
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: min(100%, 520px);
+      padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+      border-top: .5px solid rgba(60, 60, 67, .22);
+      background: rgba(245, 245, 247, .82);
+      transform: translateX(-50%);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-btn {
+      border: 0;
+      border-radius: 8px;
+      min-height: 42px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 500;
+      display: grid;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .nav-btn span {
+      display: block;
+      margin-bottom: 0;
+      font-size: 15px;
+      line-height: 1;
+      font-weight: 500;
+      opacity: .82;
+    }
+    .nav-btn.active { color: var(--primary); background: transparent; box-shadow: none; font-weight: 600; }
+
+    .fab {
+      position: fixed;
+      right: max(18px, calc((100vw - 520px) / 2 + 18px));
+      bottom: 86px;
+      z-index: 22;
+      width: 50px;
+      height: 50px;
+      border: 0;
+      border-radius: 999px;
+      color: var(--white);
+      background: var(--action);
+      box-shadow: 0 10px 24px rgba(47, 71, 56, .22);
+      font-size: 24px;
+      font-weight: 400;
+    }
+
+    dialog {
+      width: min(100% - 20px, 500px);
+      max-height: calc(100dvh - 28px);
+      padding: 0;
+      border: 0;
+      border-radius: 20px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .18);
+    }
+
+    dialog::backdrop { background: rgba(24, 23, 19, .52); }
+    .modal-body { padding: 18px; overflow: auto; max-height: calc(100dvh - 28px); background: var(--soft); }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .form-grid { display: grid; gap: 12px; }
+    label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 400; }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: var(--white);
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: transparent;
+      box-shadow: 0 0 0 3px rgba(31, 42, 34, .12);
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    details {
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+      padding: 12px;
+    }
+
+    summary { font-weight: 500; cursor: pointer; }
+    details .form-grid { margin-top: 12px; }
+
+    .tag-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .check-tag input { display: none; }
+    .check-tag span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 11px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--muted);
+    }
+    .check-tag input:checked + span { color: var(--primary); background: var(--primary-soft); }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .segment input { display: none; }
+    .segment span {
+      display: grid;
+      place-items: center;
+      min-height: 42px;
+      border: 0;
+      border-radius: 12px;
+      color: var(--muted);
+      background: var(--white);
+      font-weight: 500;
+    }
+
+    .segment input:checked + span {
+      border-color: transparent;
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .quiet-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .time-input {
+      display: grid;
+      grid-template-columns: 64px auto 64px;
+      align-items: center;
+      gap: 6px;
+      width: max-content;
+      max-width: 100%;
+      padding: 6px;
+      border-radius: 16px;
+      background: rgba(118, 118, 128, .10);
+      justify-self: start;
+    }
+
+    .time-input.long {
+      grid-template-columns: 54px auto 54px auto 54px;
+    }
+
+    .time-input input {
+      text-align: center;
+      font-size: 22px;
+      letter-spacing: .04em;
+      padding-inline: 8px;
+      min-height: 44px;
+      border-radius: 12px;
+      background: var(--white);
+    }
+
+    .time-separator {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 500;
+    }
+
+    .time-input:not(.long) .long-only { display: none; }
+
+    .inline-section {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--white);
+    }
+
+    .hidden { display: none !important; }
+
+    .empty {
+      border: 0;
+      border-radius: 14px;
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+      background: var(--white);
+    }
+
+    .empty-state {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow-subtle);
+    }
+
+    .empty-state-mark {
+      display: none;
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .empty-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .chart-wrap {
+      height: 230px;
+      padding: 10px;
+    }
+
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .pb-modal {
+      text-align: center;
+      background: var(--white);
+    }
+
+    #pbDialog[open] {
+      animation: pbDialogIn .34s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    #pbDialog[open]::backdrop {
+      animation: pbBackdropIn .24s ease-out;
+    }
+
+    #pbDialog[open] .pb-modal {
+      animation: pbContentIn .38s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    #pbDialog[open] .burst {
+      animation: pbBadgeIn .48s cubic-bezier(.18, 1.25, .28, 1) .08s both;
+    }
+
+    #pbDialog[open] .compare .card {
+      animation: pbItemIn .34s cubic-bezier(.16, 1, .3, 1) .16s both;
+    }
+
+    #pbDialog[open] .compare .card:nth-child(2) {
+      animation-delay: .21s;
+    }
+
+    @keyframes pbBackdropIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pbDialogIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes pbContentIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes pbBadgeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.82);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(0) scale(1.04);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes pbItemIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #pbDialog[open],
+      #pbDialog[open]::backdrop,
+      #pbDialog[open] .pb-modal,
+      #pbDialog[open] .burst,
+      #pbDialog[open] .compare .card {
+        animation: none;
+      }
+    }
+
+    .onboarding {
+      background: var(--soft);
+    }
+
+    .onboarding-hero {
+      padding: 16px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+
+    .onboarding-eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .onboarding-title {
+      margin-top: 8px;
+      font-size: 23px;
+      line-height: 1.18;
+      font-weight: 500;
+    }
+
+    .onboarding-copy {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .onboarding-steps {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .onboarding-step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 11px;
+      align-items: start;
+      padding: 13px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: none;
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: var(--pb-soft);
+      color: var(--pb-text);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .step-copy {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .onboarding-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .danger-zone {
+      border-color: var(--danger-line);
+      background: var(--danger-soft);
+    }
+
+    .tutorial-hint {
+      display: grid;
+      gap: 10px;
+      padding: 13px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--white);
+      color: var(--pb-text);
+    }
+
+    .tutorial-hint strong {
+      font-size: 14px;
+    }
+
+    .tutorial-hint ol {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--pb-text);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .burst {
+      width: 72px;
+      height: 72px;
+      margin: 6px auto 12px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--pb-soft);
+      border: 1px solid var(--pb-line);
+      color: var(--pb-text);
+      font-size: 30px;
+      font-weight: 600;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+      text-align: left;
+    }
+
+    .compare .card { background: var(--white); }
+    .compare strong { display: block; font-size: 24px; margin-top: 4px; }
+
+    .detail-hero {
+      padding: 18px 16px;
+      border-radius: 16px;
+      background: var(--white);
+    }
+    .detail-hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .detail-event {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .detail-value {
+      margin-top: 6px;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .detail-date {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .detail-mini-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: flex-end;
+    }
+    .detail-list {
+      overflow: hidden;
+      border-radius: 16px;
+      background: var(--white);
+    }
+    .detail-row {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 12px;
+      padding: 12px 14px;
+      border-top: .5px solid var(--line);
+      font-size: 14px;
+    }
+    .detail-row:first-child { border-top: 0; }
+    .detail-row span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .detail-row strong,
+    .detail-row > div:last-child {
+      font-weight: 400;
+      color: var(--ink);
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: flex-end;
+    }
+    .detail-image {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 14px;
+      background: var(--white);
+    }
+
+    .settings-list { display: grid; gap: 10px; }
+    .settings-menu {
+      overflow: hidden;
+      border-radius: 18px;
+      background: var(--white);
+    }
+    .settings-menu-row {
+      width: 100%;
+      min-height: 58px;
+      padding: 0 14px;
+      border: 0;
+      border-bottom: .5px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+    }
+    .settings-menu-row:last-child { border-bottom: 0; }
+    .settings-menu-row strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .settings-menu-row small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.35;
+    }
+    .settings-chevron {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+    .about-mark {
+      width: 54px;
+      height: 54px;
+      margin-bottom: 14px;
+      border-radius: 16px;
+      background: var(--action);
+      border: 0;
+      display: grid;
+      place-items: center;
+    }
+    .about-mark .mark-box {
+      width: 28px;
+      height: 25px;
+    }
+    .about-mark .mark-box::before {
+      top: -9px;
+      height: 10px;
+    }
+    .about-title {
+      font-size: 24px;
+      line-height: 1.1;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .about-copy {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .settings-detail-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 2px 12px;
+    }
+    .settings-detail-head .icon-btn {
+      width: 34px;
+      min-height: 34px;
+      border-radius: 999px;
+    }
+    .settings-detail-title {
+      font-size: 17px;
+      font-weight: 500;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(88px + env(safe-area-inset-bottom));
+      z-index: 12;
+      width: min(320px, calc(100vw - 40px));
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(28, 28, 30, .94);
+      color: #ffffff;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, .18);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 12px);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .settings-event-list {
+      overflow: hidden;
+      border-radius: 14px;
+      background: var(--white);
+    }
+    .settings-swipe {
+      position: relative;
+      overflow: hidden;
+      border-top: .5px solid var(--line);
+      background: var(--danger-soft);
+    }
+    .settings-swipe:first-child { border-top: 0; }
+    .settings-event-row {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      min-height: 56px;
+      padding: 0 15px;
+      background: var(--white);
+      transition: transform .18s ease;
+      touch-action: pan-y;
+      user-select: none;
+    }
+    .settings-swipe.open .settings-event-row { transform: translateX(-78px); }
+    .settings-delete-action {
+      position: absolute;
+      inset: 0 0 0 auto;
+      display: flex;
+      width: 78px;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+    .settings-delete-action button {
+      width: 100%;
+      min-height: 100%;
+      border-radius: 0;
+      padding: 0;
+      font-size: 13px;
+    }
+    .muted { color: var(--muted); }
+
+    @media (min-width: 760px) {
+      .app { padding-top: 26px; }
+      .pb-number { font-size: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splashScreen" aria-hidden="true">
+    <div class="splash-inner">
+      <div class="mark" aria-hidden="true"><span class="mark-box"></span></div>
+      <div class="splash-title">RecordBOX</div>
+    </div>
+  </div>
+
+  <main class="app">
+    <section id="homeView" class="view active"></section>
+    <section id="recordsView" class="view"></section>
+    <section id="settingsView" class="view"></section>
+  </main>
+
+  <button class="fab" id="addRecordFab" title="記録追加">＋</button>
+
+  <nav class="bottom-nav" aria-label="下部ナビゲーション">
+    <button class="nav-btn active" data-view="home"><span aria-hidden="true">⌂</span>ホーム</button>
+    <button class="nav-btn" data-view="records"><span aria-hidden="true">≡</span>記録</button>
+    <button class="nav-btn" data-view="settings"><span aria-hidden="true">⚙</span>設定</button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="recordDialog">
+    <form method="dialog" class="modal-body" id="recordForm">
+      <div class="modal-head">
+        <div>
+          <h2 id="recordDialogTitle">記録追加</h2>
+          <p class="sub" id="recordDialogSub">トラック種目のタイムを保存できます</p>
+        </div>
+        <button class="icon-btn" type="button" id="closeRecordDialog" title="閉じる">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="tutorial-hint hidden" id="recordTutorialHint">
+          <strong>現時点の自己ベストを登録しましょう</strong>
+          <ol>
+            <li>種目を選びます。なければ「新しい種目」に入力します。</li>
+            <li>今の自己ベストを記録に入れます。</li>
+            <li>日付がわからなければ今日のままで保存してOKです。</li>
+          </ol>
+        </div>
+        <label>種目
+          <select id="recordEvent"></select>
+        </label>
+        <div class="inline-section" id="newEventFields">
+          <label>新しい種目
+            <input id="recordNewEventName" list="eventSuggestions" autocomplete="off" placeholder="100m">
+          </label>
+          <datalist id="eventSuggestions">
+            <option value="50m"></option>
+            <option value="100m"></option>
+            <option value="200m"></option>
+            <option value="400m"></option>
+            <option value="800m"></option>
+            <option value="1500m"></option>
+            <option value="3000m"></option>
+            <option value="5000m"></option>
+            <option value="4×100mR"></option>
+          </datalist>
+          <p class="quiet-note">トラック種目のみ対応しています。</p>
+        </div>
+        <label>記録
+          <input id="recordValue" type="hidden">
+          <div class="time-input" id="recordTimeInput">
+            <input class="long-only" id="recordMinutes" data-next="recordSeconds" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="04" aria-label="分">
+            <span class="time-separator long-only">:</span>
+            <input id="recordSeconds" data-next="recordHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="12" aria-label="秒">
+            <span class="time-separator">.</span>
+            <input id="recordHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="84" aria-label="小数">
+          </div>
+        </label>
+        <div class="two">
+          <label>日付
+            <input id="recordDate" type="date" required>
+          </label>
+          <label>大会名
+            <input id="competitionName" list="competitionSuggestions" autocomplete="off" placeholder="県中体連">
+            <datalist id="competitionSuggestions"></datalist>
+          </label>
+        </div>
+        <details>
+          <summary>詳細入力</summary>
+          <div class="form-grid">
+            <div class="two">
+              <label>区分
+                <select id="recordCategory">
+                  <option value="competition">大会</option>
+                  <option value="practice_test">練習測定</option>
+                </select>
+              </label>
+              <label>公認
+                <select id="isOfficial">
+                  <option value="true">公認</option>
+                  <option value="false">非公認</option>
+                </select>
+              </label>
+            </div>
+            <div class="two">
+              <label>風速
+                <input id="wind" inputmode="decimal" placeholder="+1.2">
+              </label>
+              <label>場所
+                <input id="place" autocomplete="off" placeholder="競技場名">
+              </label>
+            </div>
+            <label>タグ
+              <div class="tag-picker" id="tagPicker"></div>
+            </label>
+            <label>メモ
+              <textarea id="memo" placeholder="予選、決勝、組、レーンなど"></textarea>
+            </label>
+            <label>リザルト画像
+              <input id="imageInput" type="file" accept="image/*">
+            </label>
+          </div>
+        </details>
+        <button class="primary" id="saveRecord" value="default">保存する</button>
+        <button class="danger hidden" type="button" id="deleteRecord">この記録を削除</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="recordDetailDialog">
+    <div class="modal-body">
+      <div class="modal-head">
+        <div>
+          <h2>記録詳細</h2>
+          <p class="sub" id="recordDetailSub"></p>
+        </div>
+        <button class="icon-btn" type="button" id="closeRecordDetailDialog" title="閉じる">×</button>
+      </div>
+      <div class="form-grid" id="recordDetailContent"></div>
+      <div class="action-row">
+        <button class="secondary" type="button" id="editRecordFromDetail">編集</button>
+        <button class="danger" type="button" id="deleteRecordFromDetail">削除</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="pbDialog">
+    <div class="modal-body pb-modal">
+      <div class="burst">PB</div>
+      <h2>自己ベスト更新</h2>
+      <p class="sub" id="pbMessage"></p>
+      <div class="compare">
+        <div class="card"><span class="date">新記録</span><strong id="newPb"></strong></div>
+        <div class="card"><span class="date">旧記録</span><strong id="oldPb"></strong></div>
+      </div>
+      <p class="record-meta" id="pbDetail"></p>
+      <div class="action-row">
+        <button class="primary" id="seeRecord">記録を見る</button>
+        <button class="secondary" id="sharePb">シェア</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="onboardingDialog">
+    <div class="modal-body onboarding">
+      <div class="modal-head">
+        <div>
+          <h2>使い方</h2>
+          <p class="sub">今の自己ベストを入れながら覚えます</p>
+        </div>
+        <button class="icon-btn" type="button" id="closeOnboarding" title="閉じる">×</button>
+      </div>
+      <div class="onboarding-hero">
+        <div class="onboarding-eyebrow">RecordBOX</div>
+        <div class="onboarding-title">まず今の自己ベストを登録しましょう</div>
+        <p class="onboarding-copy">種目、記録、日付だけでOKです。ここで入れた記録は、アプリを始めた時点の自己ベストとして保存されます。</p>
+      </div>
+      <p class="onboarding-note">データはこのブラウザに保存されます。別端末との同期はまだありません。</p>
+      <div class="action-row">
+        <button class="secondary" type="button" id="finishOnboarding">あとで</button>
+        <button class="primary" type="button" id="startWithSample">登録する</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="onboardingDoneDialog">
+    <div class="modal-body onboarding">
+      <div class="onboarding-hero">
+        <div class="onboarding-eyebrow">Saved</div>
+        <div class="onboarding-title">自己ベストを保存しました</div>
+        <p class="onboarding-copy">この記録は開始時PBとして自己ベスト一覧に反映されます。100m、200m、400mなど、他の種目も続けて登録できます。</p>
+      </div>
+      <div class="action-row">
+        <button class="secondary" type="button" id="seePbAfterOnboarding">ホームを見る</button>
+        <button class="primary" type="button" id="addAnotherBaseline">他の種目も登録</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="filterDialog" class="filter-sheet">
+    <div class="modal-body">
+      <div class="modal-head">
+        <div>
+          <h2>絞り込み</h2>
+          <p class="sub">記録一覧の表示条件</p>
+        </div>
+        <button class="icon-btn" type="button" id="closeFilterDialog" title="閉じる">×</button>
+      </div>
+      <div id="filterSheetContent"></div>
+      <div class="action-row">
+        <button class="secondary" type="button" onclick="resetRecordFilters()">リセット</button>
+        <button class="primary" type="button" onclick="closeFilterDialog()">適用</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <div class="modal-body">
+      <div class="modal-head">
+        <div>
+          <h2>設定</h2>
+          <p class="sub">ヘルプとデータについて</p>
+        </div>
+        <button class="icon-btn" type="button" id="closeSettingsDialog" title="閉じる">×</button>
+      </div>
+      <div class="settings-list">
+        <article class="card">
+          <div class="record-title">開始時の自己ベスト</div>
+          <p class="record-meta">アプリを使い始める時点の自己ベストを登録します。100m、200m、400mなど複数種目を追加できます。</p>
+          <button class="primary" type="button" id="addBaselineFromSettings" style="margin-top:12px">自己ベストを登録</button>
+        </article>
+        <article class="card">
+          <div class="record-title">ヘルプ</div>
+          <p class="record-meta">最初の自己ベストを登録するチュートリアルをもう一度開きます。</p>
+          <button class="secondary" type="button" id="openHelpFromSettings" style="margin-top:12px">チュートリアルを開く</button>
+        </article>
+        <article class="card">
+          <div class="record-title">データ保存</div>
+          <p class="record-meta">記録はこのブラウザに保存されます。別端末との同期はまだありません。</p>
+        </article>
+        <article class="card danger-zone">
+          <div class="record-title">データの初期化</div>
+          <p class="record-meta">この端末に保存されている記録、自己ベスト、種目、目標、プロフィールを削除します。</p>
+          <button class="danger" type="button" id="resetDataButton" style="margin-top:12px">データを初期化</button>
+        </article>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="profileDialog">
+    <form method="dialog" class="modal-body" id="profileForm">
+      <div class="modal-head">
+        <div>
+          <h2>プロフィール</h2>
+          <p class="sub">メイン種目と所属を設定</p>
+        </div>
+        <button class="icon-btn" value="cancel" title="閉じる">×</button>
+      </div>
+      <div class="form-grid">
+        <label>名前<input id="profileName" autocomplete="off"></label>
+        <div class="two">
+          <label>学年<input id="grade" autocomplete="off" placeholder="中2"></label>
+          <label>性別
+            <select id="gender">
+              <option value="">未設定</option>
+              <option>男子</option>
+              <option>女子</option>
+              <option>その他</option>
+            </select>
+          </label>
+        </div>
+        <label>所属<input id="affiliation" autocomplete="off" placeholder="〇〇陸上部"></label>
+        <label>メイン種目<select id="mainEvent"></select></label>
+        <button class="primary" id="saveProfile" value="default">保存する</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="goalDialog">
+    <form method="dialog" class="modal-body" id="goalForm">
+      <div class="modal-head">
+        <div>
+          <h2>目標設定</h2>
+          <p class="sub" id="goalEventName"></p>
+        </div>
+        <button class="icon-btn" type="button" id="closeGoalDialog" title="閉じる">×</button>
+      </div>
+      <div class="form-grid">
+        <input id="goalEventId" type="hidden">
+        <label>目標記録
+          <input id="goalValue" type="hidden">
+          <div class="time-input" id="goalTimeInput">
+            <input class="long-only" id="goalMinutes" data-next="goalSeconds" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="04" aria-label="分">
+            <span class="time-separator long-only">:</span>
+            <input id="goalSeconds" data-next="goalHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="30" aria-label="秒">
+            <span class="time-separator">.</span>
+            <input id="goalHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="00" aria-label="小数">
+          </div>
+        </label>
+        <label>期限
+          <input id="goalDeadline" type="date">
+        </label>
+        <label>メモ
+          <textarea id="goalMemo" placeholder="夏の大会までに、など"></textarea>
+        </label>
+        <button class="primary" id="saveGoal" value="default">保存する</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const seedTags = ["調子いい", "疲れてた", "寝不足", "怪我明け", "向かい風", "追い風", "雨", "暑い", "寒い", "スパイク使用", "初レース"];
+    const seedEventNames = ["100m", "400m", "1500m", "5000m"];
+    const seedRecordRows = [
+      ["100m", "2024-04-21", "春季記録会", 13.42, "+0.8", ["初レース"], "市営競技場"],
+      ["100m", "2024-07-14", "夏季記録会", 13.18, "+1.1", ["暑い"], ""],
+      ["100m", "2024-10-06", "秋季大会", 13.05, "+0.4", ["スパイク使用"], ""],
+      ["100m", "2025-04-20", "春季記録会", 12.92, "+1.5", ["調子いい"], ""],
+      ["100m", "2025-07-13", "通信陸上", 12.78, "+0.7", ["暑い"], "県総合"],
+      ["100m", "2025-10-05", "秋季大会", 12.70, "-0.2", ["向かい風"], ""],
+      ["100m", "2026-04-19", "春季記録会", 12.61, "+1.0", ["調子いい"], ""],
+      ["100m", "2026-05-24", "地区記録会", 12.54, "+0.9", ["スパイク使用"], ""],
+
+      ["400m", "2024-04-28", "春季記録会", 65.80, "", ["初レース"], ""],
+      ["400m", "2024-07-21", "夏季記録会", 64.92, "", ["暑い"], ""],
+      ["400m", "2024-10-13", "秋季大会", 64.20, "", ["調子いい"], ""],
+      ["400m", "2025-04-27", "春季記録会", 63.44, "", ["スパイク使用"], ""],
+      ["400m", "2025-07-20", "通信陸上", 62.75, "", ["暑い"], "県総合"],
+      ["400m", "2025-10-12", "秋季大会", 62.18, "", ["調子いい"], ""],
+      ["400m", "2026-04-26", "春季記録会", 61.64, "", ["調子いい"], ""],
+      ["400m", "2026-05-31", "地区記録会", 61.08, "", ["スパイク使用"], ""],
+
+      ["1500m", "2024-05-12", "中距離記録会", 326.40, "", ["初レース"], ""],
+      ["1500m", "2024-08-04", "夏季記録会", 321.80, "", ["暑い"], ""],
+      ["1500m", "2024-11-03", "秋季大会", 318.25, "", ["調子いい"], ""],
+      ["1500m", "2025-05-11", "中距離記録会", 313.70, "", ["スパイク使用"], ""],
+      ["1500m", "2025-08-03", "通信陸上", 309.95, "", ["暑い"], "県総合"],
+      ["1500m", "2025-11-02", "秋季大会", 306.30, "", ["調子いい"], ""],
+      ["1500m", "2026-05-10", "中距離記録会", 301.85, "", ["調子いい"], ""],
+      ["1500m", "2026-06-07", "地区記録会", 298.60, "", ["スパイク使用"], ""],
+
+      ["5000m", "2024-06-02", "長距離記録会", 1245.20, "", ["初レース"], ""],
+      ["5000m", "2024-09-08", "ナイター記録会", 1228.40, "", ["暑い"], ""],
+      ["5000m", "2024-12-01", "秋季長距離", 1214.90, "", ["調子いい"], ""],
+      ["5000m", "2025-06-01", "長距離記録会", 1198.60, "", ["スパイク使用"], ""],
+      ["5000m", "2025-09-07", "ナイター記録会", 1185.15, "", ["調子いい"], "県総合"],
+      ["5000m", "2025-12-07", "秋季長距離", 1172.80, "", ["寒い"], ""],
+      ["5000m", "2026-05-03", "長距離記録会", 1159.30, "", ["調子いい"], ""],
+      ["5000m", "2026-06-07", "地区記録会", 1148.55, "", ["スパイク使用"], ""]
+    ];
+    const storeKey = "pb-tracker-v4";
+    const onboardingKey = "pb-tracker-onboarding-v2";
+
+    let state = loadState();
+    let activeView = "home";
+    let activeEventId = state.profile.mainEventId || (state.events[0] && state.events[0].id) || "";
+    let recordFilter = "all";
+    let yearFilter = "all";
+    let homeYearFilter = String(new Date().getFullYear());
+    let categoryFilter = "all";
+    let pbOnlyFilter = false;
+    let competitionSearch = "";
+    let sortOrder = "newest";
+    let editingRecordId = "";
+    let detailRecordId = "";
+    let onboardingRecordMode = false;
+    let baselineReturnView = "";
+    let baselineReturnPanel = "menu";
+    let settingsPanel = "menu";
+    let swipeRowState = null;
+
+    function uid(prefix) {
+      return prefix + "_" + Math.random().toString(36).slice(2, 10);
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(storeKey);
+      if (saved) return JSON.parse(saved);
+      const initial = createSampleState();
+      localStorage.setItem(storeKey, JSON.stringify(initial));
+      return initial;
+    }
+
+    function createSampleState() {
+      const tags = seedTags.map(name => ({ id: uid("tag"), name }));
+      const events = seedEventNames.map((name, index) => ({
+        id: uid("event"),
+        name,
+        eventType: "time",
+        unit: "sec",
+        sortOrder: index,
+        isActive: true,
+        isFavorite: index === 0
+      }));
+      const initial = {
+        profile: { name: "Athlete", grade: "", gender: "", affiliation: "", mainEventId: events[0].id },
+        events,
+        tags,
+        competitions: [],
+        records: [],
+        goals: [
+          { id: uid("goal"), eventId: events[0].id, targetValue: 12.40, deadline: "2026-08-31", memo: "" },
+          { id: uid("goal"), eventId: events[1].id, targetValue: 60.50, deadline: "2026-08-31", memo: "" },
+          { id: uid("goal"), eventId: events[2].id, targetValue: 295.00, deadline: "2026-08-31", memo: "" },
+          { id: uid("goal"), eventId: events[3].id, targetValue: 1135.00, deadline: "2026-08-31", memo: "" }
+        ],
+        lastEventId: events[0].id
+      };
+      seedRecordRows.forEach(row => {
+        const event = events.find(item => item.name === row[0]);
+        addRecordToState(initial, {
+          eventId: event.id,
+          recordValue: row[3],
+          measuredAt: row[1],
+          competitionName: row[2],
+          recordCategory: "competition",
+          isOfficial: true,
+          wind: row[4],
+          place: row[6],
+          memo: "",
+          tags: row[5],
+          imageUrl: ""
+        }, false);
+      });
+      events.forEach(event => {
+        let best = null;
+        initial.records
+          .filter(record => record.eventId === event.id)
+          .sort((a, b) => a.measuredAt.localeCompare(b.measuredAt))
+          .forEach(record => {
+            if (record.recordValue < best || best === null) {
+              record.isPb = true;
+              best = record.recordValue;
+            }
+          });
+      });
+      return initial;
+    }
+
+    function createEmptyState() {
+      return {
+        profile: { name: "Athlete", grade: "", gender: "", affiliation: "", mainEventId: "" },
+        events: [],
+        tags: seedTags.map(name => ({ id: uid("tag"), name })),
+        competitions: [],
+        records: [],
+        goals: [],
+        lastEventId: ""
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(storeKey, JSON.stringify(state));
+    }
+
+    function eventById(id) {
+      return state.events.find(event => event.id === id);
+    }
+
+    function activeEvents() {
+      return state.events.filter(event => event.isActive);
+    }
+
+    function recordsForEvent(eventId) {
+      return state.records.filter(record => record.eventId === eventId).sort((a, b) => a.measuredAt.localeCompare(b.measuredAt));
+    }
+
+    function isWindAssisted(record) {
+      const wind = parseFloat(String(record.wind || "").replace("+", ""));
+      return Number.isFinite(wind) && wind >= 2.1;
+    }
+
+    function better(event, a, b) {
+      if (b === null || b === undefined) return true;
+      return event.eventType === "time" || event.eventType === "relay" ? a < b : a > b;
+    }
+
+    function diffText(event, from, to) {
+      if (from === null || from === undefined || to === null || to === undefined) return "初PB";
+      const diff = Math.abs(Number(from) - Number(to));
+      return event.unit === "sec" ? `${formatSeconds(diff)}短縮` : `${diff.toFixed(2)}m更新`;
+    }
+
+    function bestRecord(eventId, includeWindAssisted = false) {
+      const event = eventById(eventId);
+      if (!event) return null;
+      return recordsForEvent(eventId)
+        .filter(record => includeWindAssisted || !isWindAssisted(record))
+        .reduce((best, record) => better(event, record.recordValue, best && best.recordValue) ? record : best, null);
+    }
+
+    function previousPbRecord(eventId, recordId) {
+      const pbs = recordsForEvent(eventId).filter(record => record.isPb);
+      const index = pbs.findIndex(record => record.id === recordId);
+      return index > 0 ? pbs[index - 1] : null;
+    }
+
+    function compareByRecordValue(a, b) {
+      const eventA = eventById(a.eventId);
+      const eventB = eventById(b.eventId);
+      if (!eventA || !eventB) return b.measuredAt.localeCompare(a.measuredAt);
+      if (a.eventId !== b.eventId) return eventA.sortOrder - eventB.sortOrder;
+      if (better(eventA, a.recordValue, b.recordValue)) return -1;
+      if (better(eventA, b.recordValue, a.recordValue)) return 1;
+      return b.measuredAt.localeCompare(a.measuredAt);
+    }
+
+    function sortRecords(records) {
+      if (sortOrder === "oldest") return [...records].sort((a, b) => a.measuredAt.localeCompare(b.measuredAt));
+      if (sortOrder === "best") return [...records].sort(compareByRecordValue);
+      return [...records].sort((a, b) => b.measuredAt.localeCompare(a.measuredAt));
+    }
+
+    function recomputePbs() {
+      state.records.forEach(record => record.isPb = false);
+      state.events.forEach(event => {
+        let best = null;
+        recordsForEvent(event.id).forEach(record => {
+          if (isWindAssisted(record)) return;
+          if (better(event, record.recordValue, best && best.recordValue)) {
+            record.isPb = true;
+            best = record;
+          }
+        });
+      });
+    }
+
+    function addRecordToState(targetState, data, shouldRecompute = true) {
+      const competitionId = resolveCompetitionId(targetState, data);
+      const record = {
+        id: uid("record"),
+        eventId: data.eventId,
+        competitionId,
+        recordValue: Number(data.recordValue),
+        recordUnit: eventByIdFrom(targetState, data.eventId).unit,
+        measuredAt: data.measuredAt,
+        recordCategory: data.recordCategory || "competition",
+        isOfficial: data.isOfficial !== false,
+        wind: data.wind || "",
+        place: data.place || "",
+        memo: data.memo || "",
+        imageUrl: data.imageUrl || "",
+        tags: data.tags || [],
+        isBaseline: data.isBaseline === true,
+        isPb: false,
+        createdAt: new Date().toISOString()
+      };
+      targetState.records.push(record);
+      if (shouldRecompute) recomputePbs();
+      return record;
+    }
+
+    function resolveCompetitionId(targetState, data) {
+      if (!data.competitionName) return "";
+      let competition = targetState.competitions.find(item => item.name === data.competitionName && item.date === data.measuredAt);
+      if (!competition) {
+        competition = { id: uid("competition"), name: data.competitionName, date: data.measuredAt, venue: data.place || "", memo: "" };
+        targetState.competitions.push(competition);
+      } else if (data.place && !competition.venue) {
+        competition.venue = data.place;
+      }
+      return competition.id;
+    }
+
+    function updateRecordInState(recordId, data) {
+      const record = state.records.find(item => item.id === recordId);
+      if (!record) return;
+      record.eventId = data.eventId;
+      record.competitionId = resolveCompetitionId(state, data);
+      record.recordValue = Number(data.recordValue);
+      record.recordUnit = eventByIdFrom(state, data.eventId).unit;
+      record.measuredAt = data.measuredAt;
+      record.recordCategory = data.recordCategory || "competition";
+      record.isOfficial = data.isOfficial !== false;
+      record.wind = data.wind || "";
+      record.place = data.place || "";
+      record.memo = data.memo || "";
+      if (data.imageUrl) record.imageUrl = data.imageUrl;
+      record.tags = data.tags || [];
+      if (data.isBaseline !== undefined) record.isBaseline = data.isBaseline === true;
+      record.updatedAt = new Date().toISOString();
+      const usedCompetitionIds = new Set(state.records.map(item => item.competitionId).filter(Boolean));
+      state.competitions = state.competitions.filter(competition => usedCompetitionIds.has(competition.id));
+      recomputePbs();
+    }
+
+    function eventByIdFrom(targetState, id) {
+      return targetState.events.find(event => event.id === id);
+    }
+
+    function parseTimeInput(input) {
+      const text = String(input || "").trim().replace(",", ".");
+      if (!text) return NaN;
+      if (/^\d+$/.test(text)) {
+        if (text.length <= 4) return Number(text) / 100;
+        const hundredths = Number(text.slice(-2));
+        const seconds = Number(text.slice(-4, -2));
+        const minutes = Number(text.slice(0, -4));
+        if (!Number.isFinite(minutes) || !Number.isFinite(seconds) || !Number.isFinite(hundredths) || seconds >= 60) return NaN;
+        return minutes * 60 + seconds + hundredths / 100;
+      }
+      if (!text.includes(":")) return Number(text);
+      const parts = text.split(":").map(part => Number(part));
+      if (parts.some(part => !Number.isFinite(part))) return NaN;
+      return parts.reduce((total, part) => total * 60 + part, 0);
+    }
+
+    function formatTimeInputText(input) {
+      const digits = String(input || "").replace(/\D/g, "");
+      if (!digits) return "";
+      if (digits.length <= 2) return digits;
+      if (digits.length <= 4) return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+      return `${Number(digits.slice(0, -4))}:${digits.slice(-4, -2)}.${digits.slice(-2)}`;
+    }
+
+    function autoFormatTimeInput(event) {
+      const input = event.target;
+      const raw = input.value;
+      if (!/^\d+$/.test(raw.replace(/\D/g, ""))) return;
+      const formatted = formatTimeInputText(raw);
+      if (formatted && formatted !== raw) {
+        input.value = formatted;
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }
+
+    function isLongTrackEventName(name) {
+      const match = String(name || "").match(/(\d+)/);
+      if (!match) return false;
+      return Number(match[1]) >= 800;
+    }
+
+    function currentRecordEventName() {
+      const selected = eventById(document.getElementById("recordEvent").value);
+      return selected ? selected.name : document.getElementById("recordNewEventName").value.trim();
+    }
+
+    function setTimeInputMode(prefix, isLong) {
+      const wrapper = document.getElementById(`${prefix}TimeInput`);
+      wrapper.classList.toggle("long", isLong);
+      document.getElementById(`${prefix}Minutes`).disabled = !isLong;
+      document.getElementById(`${prefix}Minutes`).required = isLong;
+    }
+
+    function updateRecordTimeMode() {
+      setTimeInputMode("record", isLongTrackEventName(currentRecordEventName()));
+    }
+
+    function updateGoalTimeMode() {
+      const event = eventById(document.getElementById("goalEventId").value);
+      setTimeInputMode("goal", isLongTrackEventName(event && event.name));
+    }
+
+    function onlyDigits(value) {
+      return String(value || "").replace(/\D/g, "").slice(0, 2);
+    }
+
+    function handleTimePartInput(event) {
+      const input = event.target;
+      input.value = onlyDigits(input.value);
+      if (input.value.length < 2) return;
+      const nextId = input.dataset.next;
+      if (nextId) {
+        const next = document.getElementById(nextId);
+        if (next && !next.disabled) next.focus();
+      }
+    }
+
+    function timePartsValue(prefix) {
+      const isLong = document.getElementById(`${prefix}TimeInput`).classList.contains("long");
+      const minutes = Number(document.getElementById(`${prefix}Minutes`).value || 0);
+      const secondsText = document.getElementById(`${prefix}Seconds`).value;
+      const hundredthsText = document.getElementById(`${prefix}Hundredths`).value;
+      if (!secondsText || hundredthsText.length !== 2) return NaN;
+      const seconds = Number(secondsText);
+      const hundredths = Number(hundredthsText);
+      if (!Number.isFinite(seconds) || !Number.isFinite(hundredths)) return NaN;
+      if (isLong && (!Number.isFinite(minutes) || seconds >= 60)) return NaN;
+      return (isLong ? minutes * 60 : 0) + seconds + hundredths / 100;
+    }
+
+    function setTimePartsValue(prefix, value, isLong) {
+      setTimeInputMode(prefix, isLong);
+      const total = Number(value);
+      if (!Number.isFinite(total)) {
+        ["Minutes", "Seconds", "Hundredths"].forEach(part => document.getElementById(`${prefix}${part}`).value = "");
+        return;
+      }
+      const minutes = Math.floor(total / 60);
+      const seconds = Math.floor(total % 60);
+      const hundredths = Math.round((total - Math.floor(total)) * 100);
+      document.getElementById(`${prefix}Minutes`).value = isLong ? String(minutes).padStart(2, "0") : "";
+      document.getElementById(`${prefix}Seconds`).value = String(isLong ? seconds : Math.floor(total)).padStart(2, "0");
+      document.getElementById(`${prefix}Hundredths`).value = String(hundredths).padStart(2, "0");
+    }
+
+    function formatSeconds(value) {
+      const seconds = Number(value);
+      if (!Number.isFinite(seconds)) return "-";
+      if (seconds < 60) return seconds.toFixed(2);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const rest = seconds - hours * 3600 - minutes * 60;
+      const secText = rest.toFixed(2).padStart(5, "0");
+      return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${secText}` : `${minutes}:${secText}`;
+    }
+
+    function formatValue(event, value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
+      if (event.unit === "sec") return formatSeconds(value);
+      return `${Number(value).toFixed(2)}${event.unit === "m" ? "m" : ""}`;
+    }
+
+    function competitionName(record) {
+      const competition = state.competitions.find(item => item.id === record.competitionId);
+      return competition ? competition.name : "";
+    }
+
+    function categoryText(value) {
+      return value === "practice_test" ? "練習測定" : "大会";
+    }
+
+    function dateText(value) {
+      return value ? value.replaceAll("-", "/") : "";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function goalForEvent(eventId) {
+      return state.goals.find(goal => goal.eventId === eventId);
+    }
+
+    function goalDiff(event, pb, goal) {
+      if (!pb || !goal) return "-";
+      const diff = event.eventType === "time" || event.eventType === "relay"
+        ? pb.recordValue - goal.targetValue
+        : goal.targetValue - pb.recordValue;
+      if (diff <= 0) return "達成";
+      return event.unit === "sec" ? `あと${formatSeconds(diff)}` : `あと${diff.toFixed(2)}m`;
+    }
+
+    function achievement(event, pb, goal) {
+      if (!pb || !goal) return 0;
+      if (event.eventType === "time" || event.eventType === "relay") {
+        const start = Math.max(goal.targetValue + 1, pb.recordValue + .01);
+        return Math.max(0, Math.min(100, 100 - ((pb.recordValue - goal.targetValue) / (start - goal.targetValue)) * 100));
+      }
+      return Math.max(0, Math.min(100, (pb.recordValue / goal.targetValue) * 100));
+    }
+
+    function render() {
+      recomputePbs();
+      renderHome();
+      renderRecords();
+      renderSettings();
+      populateSelects();
+      drawChartSoon();
+    }
+
+    function renderHome() {
+      const events = activeEvents();
+      const measuredRecords = state.records.filter(record => !record.isBaseline);
+      const currentPbItems = events
+        .map(event => ({ event, record: bestRecord(event.id) }))
+        .filter(item => item.record)
+        .sort((a, b) => a.event.sortOrder - b.event.sortOrder)
+        .slice(0, 4);
+      const recent = [...measuredRecords].sort((a, b) => b.measuredAt.localeCompare(a.measuredAt)).slice(0, 2);
+      document.getElementById("homeView").innerHTML = `
+        <div class="screen-kicker">現在のPB</div>
+        <div class="hero">
+          <div class="track-lines"></div>
+          <div class="hero-top">
+            <div>
+              <div class="hero-title">種目別自己ベスト</div>
+            </div>
+          </div>
+          ${currentPbItems.length ? `<div class="hero-pb-list">
+            ${currentPbItems.map(item => `<div class="hero-pb-row" role="button" tabindex="0" onclick="openRecordDetail('${item.record.id}')" onkeydown="if(event.key === 'Enter'){openRecordDetail('${item.record.id}')}">
+              <div>
+                <div class="hero-pb-name">${item.event.name}</div>
+                <span>${item.record.isBaseline ? "開始時PB" : `${dateText(item.record.measuredAt)} 更新`}</span>
+              </div>
+              <div class="hero-pb-value">${formatValue(item.event, item.record.recordValue)}</div>
+            </div>`).join("")}
+          </div>` : `<div class="hero-empty"><strong>まだ自己ベストがありません</strong>設定から開始時PBを登録すると、ここに種目ごとの自己ベストが並びます。</div>`}
+        </div>
+        <div class="section-head"><h2>最近の記録</h2><button class="link-btn" onclick="switchView('records')">すべて</button></div>
+        <div class="grid">${recent.length ? recent.map(recordCard).join("") : emptyMeasuredRecordsState()}</div>
+      `;
+    }
+
+    function bestRecordForYear(eventId, year) {
+      const event = eventById(eventId);
+      if (!event) return null;
+      const records = recordsForEvent(eventId).filter(record => year === "all" || record.measuredAt.startsWith(year));
+      return records
+        .filter(record => !isWindAssisted(record))
+        .reduce((best, record) => better(event, record.recordValue, best && best.recordValue) ? record : best, null);
+    }
+
+    function bestDigestCard(item) {
+      const previous = previousPbRecord(item.event.id, item.record.id);
+      const isPersonalBest = item.record.isPb;
+      const meta = isPersonalBest
+        ? `前回より ${diffText(item.event, previous && previous.recordValue, item.record.recordValue)}`
+        : `${homeYearFilter === "all" ? "ベスト記録" : `${homeYearFilter}年のベスト`}`;
+      return `
+        <article class="card record-card" role="button" tabindex="0" onclick="openRecordDetail('${item.record.id}')" onkeydown="if(event.key === 'Enter'){openRecordDetail('${item.record.id}')}">
+          <div>
+            <div class="date">${dateText(item.record.measuredAt)} / ${competitionName(item.record) || "記録"}</div>
+            <div class="record-title">${item.event.name}</div>
+            <div class="record-meta">${meta}</div>
+          </div>
+          <div class="record-value">${formatValue(item.event, item.record.recordValue)}</div>
+          <div class="badges"><span class="badge ${isPersonalBest ? "pb" : ""}">${isPersonalBest ? "PB" : "年ベスト"}</span></div>
+        </article>
+      `;
+    }
+
+    function recordCard(record) {
+      const event = eventById(record.eventId);
+      if (!event) return "";
+      const windBadge = isWindAssisted(record) ? `<span class="badge warn">追い風参考</span>` : "";
+      const recordMeta = record.isBaseline
+        ? "アプリ開始時の自己ベスト"
+        : `${competitionName(record) || categoryText(record.recordCategory)}${record.place ? " / " + record.place : ""}`;
+      return `
+        <article class="card record-card ${record.isPb ? "is-pb" : ""}" role="button" tabindex="0" onclick="openRecordDetail('${record.id}')" onkeydown="if(event.key === 'Enter'){openRecordDetail('${record.id}')}">
+          <div>
+            ${record.isBaseline ? "" : `<div class="date">${dateText(record.measuredAt)}</div>`}
+            <div class="record-title">${event.name}</div>
+            <div class="record-meta">${recordMeta}</div>
+          </div>
+          <div class="record-value">${formatValue(event, record.recordValue)}</div>
+          <div class="badges">
+            ${record.isBaseline ? `<span class="badge">開始時PB</span>` : ""}
+            ${record.isPb ? `<span class="badge pb">PB</span>` : ""}
+            ${windBadge}
+            ${record.tags.map(tag => `<span class="badge">${tag}</span>`).join("")}
+            ${record.imageUrl ? `<span class="badge">画像</span>` : ""}
+          </div>
+        </article>
+      `;
+    }
+
+    function pbCard(record) {
+      const event = eventById(record.eventId);
+      if (!event) return "";
+      const eventRecords = recordsForEvent(event.id).filter(item => item.isPb);
+      const index = eventRecords.findIndex(item => item.id === record.id);
+      const previous = index > 0 ? eventRecords[index - 1] : null;
+      return `
+        <article class="card record-card">
+          <div>
+            <div class="date">${dateText(record.measuredAt)} / ${competitionName(record) || "記録"}</div>
+            <div class="record-title">${event.name}</div>
+            <div class="record-meta">${diffText(event, previous && previous.recordValue, record.recordValue)}</div>
+          </div>
+          <div class="record-value">${formatValue(event, record.recordValue)}</div>
+          <div class="badges"><span class="badge pb">PB</span></div>
+        </article>
+      `;
+    }
+
+    function emptyRecordsState() {
+      return `
+        <div class="empty-state">
+          <div class="empty-state-mark">+</div>
+          <div>
+            <div class="empty-title">まず設定で自己ベストを登録しましょう</div>
+            <p class="empty-copy">アプリを始めた時点の自己ベストは設定から登録できます。大会や練習測定の記録は右下の＋から追加します。</p>
+          </div>
+          <div class="empty-actions">
+            <button class="primary" onclick="switchView('settings')">設定を開く</button>
+            <button class="secondary" onclick="openRecordDialog()">記録だけ追加</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function noFilteredRecordsState() {
+      return `
+        <div class="empty-state">
+          <div class="empty-state-mark">0</div>
+          <div>
+            <div class="empty-title">条件に合う記録がありません</div>
+            <p class="empty-copy">大会名、年度、PBのみなどの条件を少し変えると見つかるかもしれません。</p>
+          </div>
+          <div class="empty-actions">
+            <button class="secondary" onclick="resetRecordFilters()">条件をリセット</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function emptyMeasuredRecordsState() {
+      return `
+        <div class="empty-state">
+          <div class="empty-state-mark">+</div>
+          <div>
+            <div class="empty-title">測定記録はまだありません</div>
+            <p class="empty-copy">開始時PBとは別に、大会や練習測定の記録を追加するとここに並びます。</p>
+          </div>
+          <div class="empty-actions">
+            <button class="primary" onclick="openRecordDialog()">記録を追加</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRecords() {
+      let records = [...state.records];
+      const hasRecords = records.length > 0;
+      if (state.events.some(event => event.id === recordFilter)) records = records.filter(record => record.eventId === recordFilter);
+      if (yearFilter !== "all") records = records.filter(record => record.measuredAt.startsWith(yearFilter));
+      if (categoryFilter !== "all") records = records.filter(record => !record.isBaseline && record.recordCategory === categoryFilter);
+      if (pbOnlyFilter) records = records.filter(record => record.isPb);
+      if (competitionSearch.trim()) {
+        const query = competitionSearch.trim().toLowerCase();
+        records = records.filter(record => competitionName(record).toLowerCase().includes(query));
+      }
+      records = sortRecords(records);
+      const recordTools = hasRecords ? `
+        <div class="record-tools">
+          <label class="record-search">
+            <input id="competitionSearchTop" value="${escapeHtml(competitionSearch)}" oninput="setCompetitionSearch(this.value)" placeholder="大会名で検索">
+          </label>
+          <div class="record-controls">
+            <label class="sort-control">並び順
+              <select id="recordSortTop" onchange="setSortOrder(this.value)">
+                <option value="newest" ${sortOrder === "newest" ? "selected" : ""}>新しい順</option>
+                <option value="oldest" ${sortOrder === "oldest" ? "selected" : ""}>古い順</option>
+                <option value="best" ${sortOrder === "best" ? "selected" : ""}>記録順</option>
+              </select>
+            </label>
+            <button class="secondary" onclick="openFilterDialog()">絞り込み</button>
+          </div>
+          <div class="filter-summary-text">${filterSummaryText()}</div>
+        </div>
+      ` : "";
+      const recordList = hasRecords
+        ? records.length ? records.map(recordCard).join("") : noFilteredRecordsState()
+        : emptyRecordsState();
+      document.getElementById("recordsView").innerHTML = `
+        <div class="screen-kicker">記録一覧</div>
+        ${recordTools}
+        <div class="grid" style="margin-top:10px">${recordList}</div>
+      `;
+    }
+
+    function renderFilterSheet() {
+      const eventFilters = [
+        ["all", "すべて"],
+        ...activeEvents().map(event => [event.id, event.name])
+      ];
+      const measuredRecords = state.records.filter(record => !record.isBaseline);
+      const yearFilters = ["all", ...[...new Set(measuredRecords.map(record => record.measuredAt.slice(0, 4)))].sort((a, b) => b.localeCompare(a))];
+      const categoryFilters = [["all", "すべて"], ["competition", "大会"], ["practice_test", "練習測定"]];
+      document.getElementById("filterSheetContent").innerHTML = `
+        <div class="filter-block">
+          <label>種目
+            <div class="filters">${eventFilters.map(item => `<button class="filter ${recordFilter === item[0] ? "active" : ""}" onclick="setRecordFilter('${item[0]}')">${item[1]}</button>`).join("")}</div>
+          </label>
+          <label>年度
+            <div class="filters">${yearFilters.map(year => `<button class="filter ${yearFilter === year ? "active" : ""}" onclick="setYearFilter('${year}')">${year === "all" ? "全年度" : year}</button>`).join("")}</div>
+          </label>
+          <label>種類
+            <div class="filters">
+              ${categoryFilters.map(item => `<button class="filter ${categoryFilter === item[0] ? "active" : ""}" onclick="setCategoryFilter('${item[0]}')">${item[1]}</button>`).join("")}
+              <button class="filter ${pbOnlyFilter ? "active" : ""}" onclick="togglePbOnly()">PBのみ</button>
+            </div>
+          </label>
+        </div>
+      `;
+    }
+
+    function filterSummaryText() {
+      const items = [];
+      const event = eventById(recordFilter);
+      if (event) items.push(event.name);
+      if (yearFilter !== "all") items.push(yearFilter);
+      if (categoryFilter === "competition") items.push("大会");
+      if (categoryFilter === "practice_test") items.push("練習測定");
+      if (pbOnlyFilter) items.push("PBのみ");
+      if (competitionSearch.trim()) items.push(`大会名: ${competitionSearch.trim()}`);
+      if (sortOrder === "oldest") items.push("古い順");
+      if (sortOrder === "best") items.push("記録順");
+      return items.length ? items.join(" ・ ") : "すべての記録";
+    }
+
+    function renderGoals() {
+      const events = activeEvents();
+      document.getElementById("goalsView").innerHTML = `
+        <div class="section-head"><h2>目標管理</h2></div>
+        ${events.length ? `<div class="grid">
+          ${events.map(event => {
+            const pb = bestRecord(event.id);
+            const goal = goalForEvent(event.id);
+            const pct = achievement(event, pb, goal);
+            return `<article class="card goal-row">
+              <button onclick="editGoal('${event.id}')">
+                <div class="record-title">${event.name}</div>
+                <div class="record-meta">目標 ${goal ? formatValue(event, goal.targetValue) : "未設定"} / 現在PB ${pb ? formatValue(event, pb.recordValue) : "-"}</div>
+                <div class="progress"><span style="width:${pct}%"></span></div>
+              </button>
+              <div class="event-stat">${goalDiff(event, pb, goal)}<small>${Math.round(pct)}%</small></div>
+            </article>`;
+          }).join("")}
+        </div>` : `<div class="empty">
+          目標を設定するには、まず記録を追加してください。
+          <div class="empty-actions">
+            <button class="primary" onclick="openRecordDialog()">記録追加</button>
+          </div>
+        </div>`}
+      `;
+    }
+
+    function renderSettings() {
+      const events = activeEvents();
+      swipeRowState = null;
+      if (settingsPanel === "events") {
+        document.getElementById("settingsView").innerHTML = `
+          <div class="settings-detail-head">
+            <button class="icon-btn" onclick="openSettingsPanel('menu')" title="戻る">‹</button>
+            <div class="settings-detail-title">種目管理</div>
+          </div>
+          <article class="card">
+            <p class="record-meta">追加済みの種目を整理します。削除すると、その種目の記録も削除されます。</p>
+            <div class="settings-event-list" style="margin-top:12px">
+              ${events.length ? events.map(event => {
+                return `<div class="settings-swipe" data-event-id="${event.id}">
+                  <div class="settings-delete-action">
+                    <button class="danger" onclick="deleteEvent('${event.id}')">削除</button>
+                  </div>
+                  <div class="settings-event-row" onpointerdown="startSwipeRow(event)" onpointermove="moveSwipeRow(event)" onpointerup="endSwipeRow(event)" onpointercancel="endSwipeRow(event)">
+                    <div class="record-title">${event.name}</div>
+                  </div>
+                </div>`;
+              }).join("") : `<div class="empty">記録を追加すると、種目も自動で追加されます。</div>`}
+            </div>
+          </article>
+        `;
+        return;
+      }
+      if (settingsPanel === "data") {
+        document.getElementById("settingsView").innerHTML = `
+          <div class="settings-detail-head">
+            <button class="icon-btn" onclick="openSettingsPanel('menu')" title="戻る">‹</button>
+            <div class="settings-detail-title">データ管理</div>
+          </div>
+          <div class="settings-list">
+            <article class="card">
+              <div class="record-title">保存場所</div>
+              <p class="record-meta">記録はこの端末のブラウザに保存されます。別端末との同期はまだありません。</p>
+            </article>
+            <article class="card">
+              <div class="record-title">サンプルデータ</div>
+              <p class="record-meta">表示確認用のデータに置き換えます。</p>
+              <button class="secondary" style="margin-top:12px" onclick="loadSampleData()">サンプルデータを入れる</button>
+            </article>
+            <article class="card danger-zone">
+              <div class="record-title">データの初期化</div>
+              <p class="record-meta">この端末に保存されている記録、自己ベスト、種目、目標、プロフィールを削除します。</p>
+              <button class="danger" style="margin-top:12px" onclick="resetData()">初期化</button>
+            </article>
+          </div>
+        `;
+        return;
+      }
+      if (settingsPanel === "about") {
+        document.getElementById("settingsView").innerHTML = `
+          <div class="settings-detail-head">
+            <button class="icon-btn" onclick="openSettingsPanel('menu')" title="戻る">‹</button>
+            <div class="settings-detail-title">このアプリについて</div>
+          </div>
+          <div class="settings-list">
+            <article class="card">
+              <div class="mark about-mark" aria-hidden="true"><span class="mark-box"></span></div>
+              <div class="about-title">RecordBOX</div>
+              <p class="about-copy">大会や練習測定の記録を残して、自己ベストの更新を見つけるための個人用トラッカーです。</p>
+            </article>
+            <div class="settings-menu">
+              <div class="settings-menu-row">
+                <span>
+                  <strong>保存場所</strong>
+                  <small>この端末のブラウザ</small>
+                </span>
+                <span></span>
+              </div>
+              <div class="settings-menu-row">
+                <span>
+                  <strong>バージョン</strong>
+                  <small>0.1.0</small>
+                </span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      document.getElementById("settingsView").innerHTML = `
+        <div class="screen-kicker">設定</div>
+        <div class="settings-menu">
+          <button class="settings-menu-row" onclick="openProfileDialog()">
+            <span>
+              <strong>プロフィール</strong>
+              <small>${state.profile.name || "Athlete"}${state.profile.affiliation ? " / " + state.profile.affiliation : ""}</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+          <button class="settings-menu-row" onclick="startOnboardingRecord()">
+            <span>
+              <strong>開始時PBを登録</strong>
+              <small>使い始める時点の自己ベストを追加</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+          <button class="settings-menu-row" onclick="openSettingsPanel('events')">
+            <span>
+              <strong>種目管理</strong>
+              <small>${events.length ? `${events.length}種目を登録中` : "記録入力で自動追加されます"}</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+          <button class="settings-menu-row" onclick="openSettingsPanel('data')">
+            <span>
+              <strong>データ管理</strong>
+              <small>保存場所、サンプルデータ、初期化</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+        </div>
+        <div class="section-head"><h2>ヘルプ</h2></div>
+        <div class="settings-menu">
+          <button class="settings-menu-row" onclick="showOnboarding(false)">
+            <span>
+              <strong>使い方を見る</strong>
+              <small>最初の自己ベスト登録の流れを確認</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+          <button class="settings-menu-row" onclick="openSettingsPanel('about')">
+            <span>
+              <strong>このアプリについて</strong>
+              <small>RecordBOXの概要と保存場所</small>
+            </span>
+            <span class="settings-chevron">›</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function openSettingsPanel(panel) {
+      settingsPanel = panel;
+      renderSettings();
+      document.getElementById("settingsView").scrollIntoView({ block: "start" });
+    }
+
+    function closeSwipeRows(exceptRow = null) {
+      document.querySelectorAll(".settings-swipe.open").forEach(row => {
+        if (row !== exceptRow) row.classList.remove("open");
+      });
+    }
+
+    function startSwipeRow(event) {
+      const row = event.currentTarget.closest(".settings-swipe");
+      if (!row) return;
+      closeSwipeRows(row);
+      swipeRowState = {
+        row,
+        startX: event.clientX,
+        startY: event.clientY,
+        currentX: event.clientX,
+        isOpen: row.classList.contains("open"),
+        dragging: false
+      };
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+
+    function moveSwipeRow(event) {
+      if (!swipeRowState) return;
+      const dx = event.clientX - swipeRowState.startX;
+      const dy = event.clientY - swipeRowState.startY;
+      if (!swipeRowState.dragging && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      swipeRowState.dragging = true;
+      swipeRowState.currentX = event.clientX;
+      const content = swipeRowState.row.querySelector(".settings-event-row");
+      const base = swipeRowState.isOpen ? -78 : 0;
+      const offset = Math.max(-78, Math.min(0, base + dx));
+      content.style.transform = `translateX(${offset}px)`;
+    }
+
+    function endSwipeRow(event) {
+      if (!swipeRowState) return;
+      const { row, startX, currentX, isOpen, dragging } = swipeRowState;
+      const content = row.querySelector(".settings-event-row");
+      content.style.transform = "";
+      if (dragging) {
+        const dx = currentX - startX;
+        row.classList.toggle("open", isOpen ? dx > -24 : dx < -24);
+      }
+      swipeRowState = null;
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+
+    function populateSelects() {
+      const events = activeEvents();
+      const options = events.map(event => `<option value="${event.id}">${event.name}</option>`).join("");
+      document.getElementById("recordEvent").innerHTML = `<option value="">新しい種目を入力</option>${options}`;
+      document.getElementById("recordEvent").value = state.lastEventId || state.profile.mainEventId || (events[0] && events[0].id) || "";
+      document.getElementById("mainEvent").innerHTML = `<option value="">未設定</option>${options}`;
+      document.getElementById("mainEvent").value = state.profile.mainEventId || "";
+      document.getElementById("tagPicker").innerHTML = state.tags.map(tag => `
+        <label class="check-tag"><input type="checkbox" value="${tag.name}"><span>${tag.name}</span></label>
+      `).join("");
+      const competitionNames = [...new Set(state.competitions.map(competition => competition.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ja"));
+      const competitionSuggestions = document.getElementById("competitionSuggestions");
+      if (competitionSuggestions) {
+        competitionSuggestions.innerHTML = competitionNames.map(name => `<option value="${escapeHtml(name)}"></option>`).join("");
+      }
+      toggleNewEventFields();
+    }
+
+    function toggleNewEventFields() {
+      const select = document.getElementById("recordEvent");
+      const fields = document.getElementById("newEventFields");
+      const input = document.getElementById("recordNewEventName");
+      if (!select || !fields || !input) return;
+      const show = !select.value;
+      fields.classList.toggle("hidden", !show);
+      if (!show) {
+        input.value = "";
+        input.setCustomValidity("");
+      }
+    }
+
+    function drawChartSoon() {
+      requestAnimationFrame(drawChart);
+    }
+
+    function drawChart() {
+      const canvas = document.getElementById("growthChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const event = eventById(activeEventId);
+      if (!event) return;
+      const rootStyle = getComputedStyle(document.documentElement);
+      const chartColors = {
+        white: rootStyle.getPropertyValue("--white").trim(),
+        line: rootStyle.getPropertyValue("--line").trim(),
+        muted: rootStyle.getPropertyValue("--muted").trim(),
+        primary: rootStyle.getPropertyValue("--primary").trim(),
+        ink: rootStyle.getPropertyValue("--ink").trim(),
+        pb: rootStyle.getPropertyValue("--pb").trim(),
+        pbText: rootStyle.getPropertyValue("--pb-text").trim()
+      };
+      const records = recordsForEvent(activeEventId);
+      const goal = goalForEvent(activeEventId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = chartColors.white;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = chartColors.line;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        const y = 24 + i * 40;
+        ctx.beginPath();
+        ctx.moveTo(36, y);
+        ctx.lineTo(canvas.width - 14, y);
+        ctx.stroke();
+      }
+      if (!records.length) {
+        ctx.fillStyle = chartColors.muted;
+        ctx.font = "14px sans-serif";
+        ctx.fillText("記録を追加するとグラフが表示されます", 72, 116);
+        return;
+      }
+      const values = records.map(record => record.recordValue).concat(goal ? [goal.targetValue] : []);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const pad = Math.max((max - min) * .18, event.unit === "sec" ? .2 : .1);
+      const low = min - pad;
+      const high = max + pad;
+      const xFor = index => 42 + (records.length === 1 ? 0 : index * ((canvas.width - 70) / (records.length - 1)));
+      const yFor = value => 196 - ((value - low) / (high - low)) * 160;
+
+      if (goal) {
+        const y = yFor(goal.targetValue);
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = chartColors.pb;
+        ctx.beginPath();
+        ctx.moveTo(36, y);
+        ctx.lineTo(canvas.width - 14, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = chartColors.pbText;
+        ctx.font = "12px sans-serif";
+        ctx.fillText("目標", canvas.width - 48, y - 6);
+      }
+
+      ctx.strokeStyle = chartColors.primary;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      records.forEach((record, index) => {
+        const x = xFor(index);
+        const y = yFor(record.recordValue);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      let best = null;
+      ctx.strokeStyle = chartColors.ink;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      records.forEach((record, index) => {
+        if (!isWindAssisted(record) && better(event, record.recordValue, best)) best = record.recordValue;
+        const x = xFor(index);
+        const y = yFor(best || record.recordValue);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      records.forEach((record, index) => {
+        ctx.fillStyle = record.isPb ? chartColors.pb : chartColors.primary;
+        ctx.beginPath();
+        ctx.arc(xFor(index), yFor(record.recordValue), record.isPb ? 5 : 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function switchView(view) {
+      activeView = view;
+      if (view === "settings" || settingsPanel !== "menu") {
+        settingsPanel = "menu";
+        renderSettings();
+      }
+      document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
+      document.getElementById(`${view}View`).classList.add("active");
+      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
+      drawChartSoon();
+    }
+
+    function setRecordFilter(filter) {
+      recordFilter = filter;
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function setYearFilter(filter) {
+      yearFilter = filter;
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function setHomeYearFilter(filter) {
+      homeYearFilter = filter;
+      renderHome();
+    }
+
+    function setCategoryFilter(filter) {
+      categoryFilter = filter;
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function togglePbOnly() {
+      pbOnlyFilter = !pbOnlyFilter;
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function setCompetitionSearch(value) {
+      competitionSearch = value;
+      renderRecords();
+      const input = document.getElementById("competitionSearchTop");
+      if (input) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }
+
+    function setSortOrder(value) {
+      sortOrder = value;
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function openFilterDialog() {
+      renderFilterSheet();
+      document.getElementById("filterDialog").showModal();
+    }
+
+    function closeFilterDialog() {
+      document.getElementById("filterDialog").close();
+    }
+
+    function resetRecordFilters() {
+      recordFilter = "all";
+      yearFilter = "all";
+      homeYearFilter = String(new Date().getFullYear());
+      categoryFilter = "all";
+      pbOnlyFilter = false;
+      competitionSearch = "";
+      sortOrder = "newest";
+      renderRecords();
+      renderFilterSheet();
+    }
+
+    function setSelectValue(id, value) {
+      const element = document.getElementById(id);
+      if (element) element.value = value;
+    }
+
+    function setRecordFormMode(record) {
+      editingRecordId = record ? record.id : "";
+      const showTutorial = onboardingRecordMode && !record;
+      document.getElementById("recordDialogTitle").textContent = record ? "記録編集" : showTutorial ? "自己ベスト登録" : "記録追加";
+      document.getElementById("recordDialogSub").textContent = record ? "入力内容を直して保存できます" : showTutorial ? "今の自己ベストを開始時PBとして保存します" : "トラック種目のタイムを保存できます";
+      document.getElementById("saveRecord").textContent = record ? "更新する" : "保存する";
+      document.getElementById("deleteRecord").classList.toggle("hidden", !record);
+      document.getElementById("recordTutorialHint").classList.toggle("hidden", !showTutorial);
+    }
+
+    function detailRow(label, value) {
+      if (!value) return "";
+      return `<div class="detail-row"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+
+    function openRecordDetail(recordId) {
+      const record = state.records.find(item => item.id === recordId);
+      const event = record ? eventById(record.eventId) : null;
+      if (!record || !event) return;
+      detailRecordId = recordId;
+      const detailBadges = [
+        record.isPb ? `<span class="badge pb">PB</span>` : "",
+        record.isBaseline ? `<span class="badge">開始時PB</span>` : ""
+      ].filter(Boolean).join("");
+      const competition = competitionName(record);
+      const tags = (record.tags || []).length
+        ? record.tags.map(tag => `<span class="badge">${escapeHtml(tag)}</span>`).join("")
+        : "";
+      const windText = record.wind ? `${escapeHtml(record.wind)}${isWindAssisted(record) ? "（追い風参考）" : ""}` : "";
+      const details = [
+        detailRow("大会名", escapeHtml(competition)),
+        record.isBaseline ? "" : detailRow("区分", categoryText(record.recordCategory)),
+        detailRow("公認", record.isOfficial === false ? "非公認" : "公認"),
+        detailRow("風速", windText),
+        detailRow("場所", escapeHtml(record.place)),
+        tags ? `<div class="detail-row"><span>タグ</span><div class="detail-tags">${tags}</div></div>` : "",
+        detailRow("メモ", escapeHtml(record.memo).replaceAll("\n", "<br>"))
+      ].filter(Boolean).join("");
+      document.getElementById("recordDetailSub").textContent = record.isBaseline ? `開始時PB / ${event.name}` : `${dateText(record.measuredAt)} / ${event.name}`;
+      document.getElementById("recordDetailContent").innerHTML = `
+        <div class="detail-hero">
+          <div class="detail-hero-top">
+            <div class="detail-event">${event.name}</div>
+            ${detailBadges ? `<div class="detail-mini-badges">${detailBadges}</div>` : ""}
+          </div>
+          <div class="detail-value">${formatValue(event, record.recordValue)}</div>
+          ${record.isBaseline ? `<div class="detail-date">アプリ開始時の自己ベスト</div>` : `<div class="detail-date">${dateText(record.measuredAt)}</div>`}
+        </div>
+        ${details ? `<div class="detail-list">${details}</div>` : ""}
+        ${record.imageUrl ? `<img class="detail-image" src="${record.imageUrl}" alt="リザルト画像">` : ""}
+      `;
+      document.getElementById("recordDetailDialog").showModal();
+    }
+
+    function closeRecordDetail() {
+      detailRecordId = "";
+      const dialog = document.getElementById("recordDetailDialog");
+      if (dialog.open) dialog.close();
+    }
+
+    function editRecordFromDetail() {
+      const recordId = detailRecordId;
+      closeRecordDetail();
+      if (recordId) openRecordDialog(recordId);
+    }
+
+    function deleteRecordById(recordId) {
+      const record = state.records.find(item => item.id === recordId);
+      if (!record) return false;
+      const event = eventById(record.eventId);
+      const label = event ? `${event.name} ${formatValue(event, record.recordValue)}` : "この記録";
+      if (!confirm(`${label}を削除しますか？`)) return false;
+      state.records = state.records.filter(item => item.id !== recordId);
+      const usedCompetitionIds = new Set(state.records.map(item => item.competitionId).filter(Boolean));
+      state.competitions = state.competitions.filter(competition => usedCompetitionIds.has(competition.id));
+      recomputePbs();
+      saveState();
+      render();
+      showToast("記録を削除しました");
+      return true;
+    }
+
+    function deleteRecordFromDetail() {
+      if (!detailRecordId) return;
+      if (deleteRecordById(detailRecordId)) closeRecordDetail();
+    }
+
+    function openRecordDialog(recordId = "") {
+      const record = recordId ? state.records.find(item => item.id === recordId) : null;
+      document.getElementById("recordForm").reset();
+      document.getElementById("recordDate").value = new Date().toISOString().slice(0, 10);
+      populateSelects();
+      setRecordFormMode(record);
+      document.getElementById("recordNewEventName").setCustomValidity("");
+      updateRecordTimeMode();
+      setTimePartsValue("record", NaN, document.getElementById("recordTimeInput").classList.contains("long"));
+      if (record) {
+        const event = eventById(record.eventId);
+        setSelectValue("recordEvent", record.eventId);
+        document.getElementById("recordNewEventName").value = "";
+        toggleNewEventFields();
+        setTimePartsValue("record", record.recordValue, isLongTrackEventName(event && event.name));
+        document.getElementById("recordDate").value = record.measuredAt;
+        document.getElementById("competitionName").value = competitionName(record);
+        setSelectValue("recordCategory", record.recordCategory || "competition");
+        setSelectValue("isOfficial", String(record.isOfficial !== false));
+        document.getElementById("wind").value = record.wind || "";
+        document.getElementById("place").value = record.place || "";
+        document.getElementById("memo").value = record.memo || "";
+        document.querySelectorAll("#tagPicker input").forEach(input => {
+          input.checked = (record.tags || []).includes(input.value);
+        });
+      }
+      document.getElementById("recordDialog").showModal();
+      setTimeout(() => {
+        const target = activeEvents().length
+          ? document.getElementById(document.getElementById("recordTimeInput").classList.contains("long") ? "recordMinutes" : "recordSeconds")
+          : document.getElementById("recordNewEventName");
+        target.focus();
+      }, 60);
+    }
+
+    function openProfileDialog() {
+      document.getElementById("profileName").value = state.profile.name || "";
+      document.getElementById("grade").value = state.profile.grade || "";
+      document.getElementById("gender").value = state.profile.gender || "";
+      document.getElementById("affiliation").value = state.profile.affiliation || "";
+      populateSelects();
+      document.getElementById("profileDialog").showModal();
+    }
+
+    function openGoalDialog(eventId) {
+      const event = eventById(eventId);
+      if (!event) return;
+      const goal = goalForEvent(eventId);
+      document.getElementById("goalForm").reset();
+      document.getElementById("goalEventId").value = eventId;
+      document.getElementById("goalEventName").textContent = event.name;
+      setTimePartsValue("goal", goal ? goal.targetValue : NaN, isLongTrackEventName(event.name));
+      document.getElementById("goalDeadline").value = goal ? goal.deadline || "" : "";
+      document.getElementById("goalMemo").value = goal ? goal.memo || "" : "";
+      document.getElementById("goalDialog").showModal();
+      setTimeout(() => document.getElementById(document.getElementById("goalTimeInput").classList.contains("long") ? "goalMinutes" : "goalSeconds").focus(), 60);
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise(resolve => {
+        if (!file) return resolve("");
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    async function saveRecordFromForm(event) {
+      event.preventDefault();
+      const wasTutorial = onboardingRecordMode && !editingRecordId;
+      const wasEditing = Boolean(editingRecordId);
+      const editingId = editingRecordId;
+      const newEventInput = document.getElementById("recordNewEventName");
+      let eventId = document.getElementById("recordEvent").value;
+      const newEventName = newEventInput.value.trim();
+      newEventInput.setCustomValidity("");
+      if (!eventId && !newEventName) {
+        newEventInput.setCustomValidity("種目を入力してください");
+        newEventInput.reportValidity();
+        return;
+      }
+      if (newEventName) {
+        eventId = findOrCreateEvent(newEventName).id;
+      }
+      const recordEvent = eventById(eventId);
+      if (!recordEvent) return;
+      updateRecordTimeMode();
+      const value = timePartsValue("record");
+      if (!Number.isFinite(value)) return;
+      const previous = bestRecord(eventId);
+      const previousSnapshot = previous ? { id: previous.id, recordValue: previous.recordValue } : null;
+      const imageUrl = await fileToDataUrl(document.getElementById("imageInput").files[0]);
+      const tags = [...document.querySelectorAll("#tagPicker input:checked")].map(input => input.value);
+      const data = {
+        eventId,
+        recordValue: value,
+        measuredAt: document.getElementById("recordDate").value,
+        competitionName: document.getElementById("competitionName").value.trim(),
+        recordCategory: document.getElementById("recordCategory").value,
+        isOfficial: document.getElementById("isOfficial").value === "true",
+        wind: document.getElementById("wind").value.trim(),
+        place: document.getElementById("place").value.trim(),
+        memo: document.getElementById("memo").value.trim(),
+        tags,
+        imageUrl
+      };
+      let savedRecord = null;
+      if (editingId) {
+        updateRecordInState(editingId, data);
+        savedRecord = state.records.find(record => record.id === editingId);
+      } else {
+        savedRecord = addRecordToState(state, { ...data, isBaseline: wasTutorial }, true);
+      }
+      state.lastEventId = eventId;
+      saveState();
+      document.getElementById("recordDialog").close();
+      render();
+      const current = bestRecord(eventId);
+      if (wasTutorial) {
+        onboardingRecordMode = false;
+        editingRecordId = "";
+        showOnboardingDone();
+        return;
+      }
+      const updatedPb = current
+        && savedRecord
+        && current.id === savedRecord.id
+        && !savedRecord.isBaseline
+        && !isWindAssisted(current)
+        && (!previousSnapshot || better(recordEvent, value, previousSnapshot.recordValue));
+      if (updatedPb) {
+        showPbModal(recordEvent, previousSnapshot, current);
+      } else {
+        showToast(wasEditing ? "記録を更新しました" : "記録を保存しました");
+      }
+      editingRecordId = "";
+    }
+
+    function showPbModal(event, previous, current) {
+      const goal = goalForEvent(event.id);
+      document.getElementById("pbMessage").textContent = `${event.name} ${diffText(event, previous && previous.recordValue, current.recordValue)}`;
+      document.getElementById("newPb").textContent = formatValue(event, current.recordValue);
+      document.getElementById("oldPb").textContent = previous ? formatValue(event, previous.recordValue) : "-";
+      document.getElementById("pbDetail").textContent = `${competitionName(current) || "記録"} / ${goalDiff(event, current, goal)}`;
+      document.getElementById("pbDialog").showModal();
+    }
+
+    function findOrCreateEvent(name) {
+      const normalized = name.trim();
+      const existing = activeEvents().find(event => event.name.toLowerCase() === normalized.toLowerCase());
+      if (existing) return existing;
+      const newEvent = {
+        id: uid("event"),
+        name: normalized,
+        eventType: "time",
+        unit: "sec",
+        sortOrder: state.events.length,
+        isActive: true,
+        isFavorite: false
+      };
+      state.events.push(newEvent);
+      if (!state.profile.mainEventId) state.profile.mainEventId = newEvent.id;
+      activeEventId = newEvent.id;
+      return newEvent;
+    }
+
+    function setMainEvent(eventId) {
+      if (!eventById(eventId)) return;
+      state.profile.mainEventId = eventId;
+      activeEventId = eventId;
+      saveState();
+      render();
+    }
+
+    function deleteEvent(eventId) {
+      const event = eventById(eventId);
+      if (!event) return;
+      const count = state.records.filter(record => record.eventId === eventId).length;
+      const message = count
+        ? `${event.name}を削除しますか？ この種目の記録${count}件と目標も削除されます。`
+        : `${event.name}を削除しますか？`;
+      if (!confirm(message)) return;
+      state.events = state.events.filter(item => item.id !== eventId);
+      state.records = state.records.filter(record => record.eventId !== eventId);
+      state.goals = state.goals.filter(goal => goal.eventId !== eventId);
+      const usedCompetitionIds = new Set(state.records.map(record => record.competitionId).filter(Boolean));
+      state.competitions = state.competitions.filter(competition => usedCompetitionIds.has(competition.id));
+      if (state.profile.mainEventId === eventId) state.profile.mainEventId = (activeEvents()[0] && activeEvents()[0].id) || "";
+      if (state.lastEventId === eventId) state.lastEventId = state.profile.mainEventId;
+      activeEventId = state.profile.mainEventId || (activeEvents()[0] && activeEvents()[0].id) || "";
+      recordFilter = state.events.some(item => item.id === recordFilter) ? recordFilter : "all";
+      saveState();
+      render();
+    }
+
+    function deleteRecord() {
+      if (!editingRecordId) return;
+      const deleted = deleteRecordById(editingRecordId);
+      if (!deleted) return;
+      editingRecordId = "";
+      document.getElementById("recordDialog").close();
+    }
+
+    function editGoal(eventId) {
+      openGoalDialog(eventId);
+    }
+
+    function saveGoalFromForm(event) {
+      event.preventDefault();
+      const eventId = document.getElementById("goalEventId").value;
+      const goal = goalForEvent(eventId);
+      updateGoalTimeMode();
+      const value = timePartsValue("goal");
+      if (!Number.isFinite(value)) return;
+      const deadline = document.getElementById("goalDeadline").value;
+      const memo = document.getElementById("goalMemo").value.trim();
+      if (goal) {
+        goal.targetValue = value;
+        goal.deadline = deadline;
+        goal.memo = memo;
+      } else {
+        state.goals.push({ id: uid("goal"), eventId, targetValue: value, deadline, memo });
+      }
+      saveState();
+      document.getElementById("goalDialog").close();
+      render();
+    }
+
+    function performResetData() {
+      localStorage.removeItem(storeKey);
+      localStorage.removeItem(onboardingKey);
+      state = createEmptyState();
+      saveState();
+      activeEventId = state.profile.mainEventId || "";
+      recordFilter = "all";
+      yearFilter = "all";
+      categoryFilter = "all";
+      pbOnlyFilter = false;
+      competitionSearch = "";
+      sortOrder = "newest";
+      settingsPanel = "menu";
+      closeSettingsDialog();
+      render();
+      switchView("home");
+      showOnboarding(false);
+    }
+
+    function resetData() {
+      if (!confirm("本当にデータを初期化しますか？")) return;
+      performResetData();
+    }
+
+    function loadSampleData() {
+      if (state.records.length && !confirm("現在のデータをサンプルデータに置き換えますか？")) return;
+      state = createSampleState();
+      saveState();
+      activeEventId = state.profile.mainEventId || "";
+      recordFilter = "all";
+      yearFilter = "all";
+      homeYearFilter = "2026";
+      categoryFilter = "all";
+      pbOnlyFilter = false;
+      competitionSearch = "";
+      sortOrder = "newest";
+      settingsPanel = "menu";
+      render();
+      switchView("home");
+    }
+
+    function startOnboardingRecord() {
+      baselineReturnView = activeView;
+      baselineReturnPanel = settingsPanel;
+      closeOnboarding(true);
+      closeOnboardingDone();
+      closeSettingsDialog();
+      onboardingRecordMode = true;
+      openRecordDialog();
+    }
+
+    function closeRecordDialogFromButton() {
+      const shouldReturn = onboardingRecordMode && !editingRecordId && baselineReturnView;
+      const returnView = baselineReturnView;
+      const returnPanel = baselineReturnPanel;
+      onboardingRecordMode = false;
+      document.getElementById("recordDialog").close();
+      if (shouldReturn) {
+        if (returnView === "settings") {
+          settingsPanel = returnPanel || "menu";
+          renderSettings();
+        }
+        switchView(returnView);
+      }
+    }
+
+    function openSettingsFromOnboarding() {
+      closeOnboarding(true);
+      switchView("settings");
+    }
+
+    function showOnboarding(markSeen = false) {
+      if (markSeen) localStorage.setItem(onboardingKey, "seen");
+      document.getElementById("onboardingDialog").showModal();
+    }
+
+    function closeOnboarding(markSeen = true) {
+      if (markSeen) localStorage.setItem(onboardingKey, "seen");
+      const dialog = document.getElementById("onboardingDialog");
+      if (dialog.open) dialog.close();
+    }
+
+    function maybeShowOnboarding() {
+      if (!localStorage.getItem(onboardingKey)) {
+        setTimeout(() => showOnboarding(false), 180);
+      }
+    }
+
+    function showOnboardingDone() {
+      localStorage.setItem(onboardingKey, "seen");
+      switchView("home");
+      document.getElementById("onboardingDoneDialog").showModal();
+    }
+
+    function closeOnboardingDone() {
+      const dialog = document.getElementById("onboardingDoneDialog");
+      if (dialog.open) dialog.close();
+    }
+
+    function openSettingsDialog() {
+      document.getElementById("settingsDialog").showModal();
+    }
+
+    function closeSettingsDialog() {
+      const dialog = document.getElementById("settingsDialog");
+      if (dialog.open) dialog.close();
+    }
+
+    function openHelpFromSettings() {
+      closeSettingsDialog();
+      showOnboarding(false);
+    }
+
+    function hideSplashSoon() {
+      const splash = document.getElementById("splashScreen");
+      if (!splash) return;
+      setTimeout(() => splash.classList.add("hide"), 760);
+      setTimeout(() => splash.remove(), 1200);
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+    document.getElementById("addRecordFab").addEventListener("click", openRecordDialog);
+    document.getElementById("closeSettingsDialog").addEventListener("click", closeSettingsDialog);
+    document.getElementById("openHelpFromSettings").addEventListener("click", openHelpFromSettings);
+    document.getElementById("addBaselineFromSettings").addEventListener("click", startOnboardingRecord);
+    document.getElementById("resetDataButton").addEventListener("click", resetData);
+    document.getElementById("closeOnboarding").addEventListener("click", () => closeOnboarding());
+    document.getElementById("finishOnboarding").addEventListener("click", () => closeOnboarding());
+    document.getElementById("startWithSample").addEventListener("click", startOnboardingRecord);
+    document.getElementById("addAnotherBaseline").addEventListener("click", startOnboardingRecord);
+    document.getElementById("seePbAfterOnboarding").addEventListener("click", () => {
+      closeOnboardingDone();
+      switchView("home");
+    });
+    document.getElementById("closeRecordDialog").addEventListener("click", closeRecordDialogFromButton);
+    document.getElementById("closeRecordDetailDialog").addEventListener("click", closeRecordDetail);
+    document.getElementById("editRecordFromDetail").addEventListener("click", editRecordFromDetail);
+    document.getElementById("deleteRecordFromDetail").addEventListener("click", deleteRecordFromDetail);
+    document.getElementById("closeGoalDialog").addEventListener("click", () => {
+      document.getElementById("goalDialog").close();
+    });
+    document.getElementById("closeFilterDialog").addEventListener("click", closeFilterDialog);
+    document.getElementById("recordForm").addEventListener("submit", saveRecordFromForm);
+    document.getElementById("recordEvent").addEventListener("change", () => {
+      toggleNewEventFields();
+      updateRecordTimeMode();
+    });
+    document.getElementById("recordNewEventName").addEventListener("input", updateRecordTimeMode);
+    ["recordMinutes", "recordSeconds", "recordHundredths", "goalMinutes", "goalSeconds", "goalHundredths"].forEach(id => {
+      document.getElementById(id).addEventListener("input", handleTimePartInput);
+    });
+    document.getElementById("deleteRecord").addEventListener("click", deleteRecord);
+    document.getElementById("goalForm").addEventListener("submit", saveGoalFromForm);
+    document.getElementById("profileForm").addEventListener("submit", event => {
+      event.preventDefault();
+      state.profile.name = document.getElementById("profileName").value.trim() || "Athlete";
+      state.profile.grade = document.getElementById("grade").value.trim();
+      state.profile.gender = document.getElementById("gender").value;
+      state.profile.affiliation = document.getElementById("affiliation").value.trim();
+      state.profile.mainEventId = document.getElementById("mainEvent").value;
+      activeEventId = state.profile.mainEventId || (activeEvents()[0] && activeEvents()[0].id) || "";
+      saveState();
+      document.getElementById("profileDialog").close();
+      render();
+    });
+    document.getElementById("seeRecord").addEventListener("click", () => {
+      document.getElementById("pbDialog").close();
+      switchView("records");
+    });
+    document.getElementById("sharePb").addEventListener("click", async () => {
+      const text = document.getElementById("pbMessage").textContent + " " + document.getElementById("newPb").textContent;
+      if (navigator.share) await navigator.share({ title: "PB更新", text });
+      else await navigator.clipboard.writeText(text);
+    });
+
+    window.openRecordDialog = openRecordDialog;
+    window.openRecordDetail = openRecordDetail;
+    window.switchView = switchView;
+    window.setRecordFilter = setRecordFilter;
+    window.setYearFilter = setYearFilter;
+    window.setHomeYearFilter = setHomeYearFilter;
+    window.setCategoryFilter = setCategoryFilter;
+    window.togglePbOnly = togglePbOnly;
+    window.setCompetitionSearch = setCompetitionSearch;
+    window.setSortOrder = setSortOrder;
+    window.openFilterDialog = openFilterDialog;
+    window.closeFilterDialog = closeFilterDialog;
+    window.resetRecordFilters = resetRecordFilters;
+    window.openProfileDialog = openProfileDialog;
+    window.openGoalDialog = openGoalDialog;
+    window.setMainEvent = setMainEvent;
+    window.deleteEvent = deleteEvent;
+    window.deleteRecord = deleteRecord;
+    window.editGoal = editGoal;
+    window.resetData = resetData;
+    window.loadSampleData = loadSampleData;
+    window.showOnboarding = showOnboarding;
+    window.startOnboardingRecord = startOnboardingRecord;
+    window.openSettingsDialog = openSettingsDialog;
+    window.openSettingsPanel = openSettingsPanel;
+    window.startSwipeRow = startSwipeRow;
+    window.moveSwipeRow = moveSwipeRow;
+    window.endSwipeRow = endSwipeRow;
+
+    render();
+    hideSplashSoon();
+    maybeShowOnboarding();
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

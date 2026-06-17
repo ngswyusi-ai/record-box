@@ -1,0 +1,25 @@
+{
+  "name": "RecordBOX",
+  "short_name": "RecordBOX",
+  "description": "大会や練習測定の記録を残して、自己ベストの更新を見つけるための個人用トラッカーです。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#2f4738",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
