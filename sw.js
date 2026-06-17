@@ -1,4 +1,4 @@
-const CACHE_NAME = "recordbox-v1";
+const CACHE_NAME = "recordbox-v4";
 const APP_SHELL = [
   "./",
   "./index.html",

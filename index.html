@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>RecordBOX</title>
   <meta name="description" content="大会や練習測定の記録を残して、自己ベストの更新を見つけるための個人用トラッカーです。">
   <meta name="theme-color" content="#2f4738">
@@ -49,7 +49,12 @@
     }
 
     button, input, select, textarea { font: inherit; }
-    button { cursor: pointer; }
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
     button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
       outline: 2px solid rgba(183, 137, 54, .32);
       outline-offset: 2px;
@@ -59,7 +64,7 @@
       width: min(100%, 520px);
       min-height: 100vh;
       margin: 0 auto;
-      padding: 14px 16px 96px;
+      padding: 14px 16px 122px;
     }
 
     .splash {
@@ -406,34 +411,6 @@
     .badge.pb { background: var(--pb-soft); color: var(--pb-text); }
     .badge.warn { background: var(--danger-soft); color: var(--danger); }
 
-    .event-row, .goal-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .event-row button, .goal-row button {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      text-align: left;
-      padding: 0;
-      color: inherit;
-    }
-
-    .event-stat { text-align: right; font-weight: 500; }
-    .event-stat small { display: block; color: var(--muted); font-weight: 400; font-size: 11px; margin-top: 3px; }
-    .progress {
-      overflow: hidden;
-      height: 8px;
-      margin-top: 10px;
-      border-radius: 999px;
-      background: rgba(118, 118, 128, .18);
-    }
-
-    .progress span { display: block; height: 100%; border-radius: 999px; background: var(--success); }
-
     .tabs, .filters {
       display: flex;
       gap: 8px;
@@ -559,11 +536,12 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       width: min(100%, 520px);
-      padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+      padding: 8px 10px calc(18px + env(safe-area-inset-bottom));
       border-top: .5px solid rgba(60, 60, 67, .22);
       background: rgba(245, 245, 247, .82);
       transform: translateX(-50%);
       backdrop-filter: blur(14px);
+      touch-action: manipulation;
     }
 
     .nav-btn {
@@ -578,6 +556,7 @@
       align-items: center;
       justify-content: center;
       gap: 3px;
+      touch-action: manipulation;
     }
 
     .nav-btn span {
@@ -593,7 +572,7 @@
     .fab {
       position: fixed;
       right: max(18px, calc((100vw - 520px) / 2 + 18px));
-      bottom: 86px;
+      bottom: calc(104px + env(safe-area-inset-bottom));
       z-index: 22;
       width: 50px;
       height: 50px;
@@ -638,6 +617,7 @@
       color: var(--ink);
       background: var(--white);
       outline: none;
+      font-size: 16px;
     }
 
     input:focus, select:focus, textarea:focus {
@@ -789,13 +769,6 @@
       margin-top: 14px;
       flex-wrap: wrap;
     }
-
-    .chart-wrap {
-      height: 230px;
-      padding: 10px;
-    }
-
-    canvas { width: 100%; height: 100%; display: block; }
 
     .pb-modal {
       text-align: center;
@@ -1457,39 +1430,6 @@
     </div>
   </dialog>
 
-  <dialog id="settingsDialog">
-    <div class="modal-body">
-      <div class="modal-head">
-        <div>
-          <h2>設定</h2>
-          <p class="sub">ヘルプとデータについて</p>
-        </div>
-        <button class="icon-btn" type="button" id="closeSettingsDialog" title="閉じる">×</button>
-      </div>
-      <div class="settings-list">
-        <article class="card">
-          <div class="record-title">開始時の自己ベスト</div>
-          <p class="record-meta">アプリを使い始める時点の自己ベストを登録します。100m、200m、400mなど複数種目を追加できます。</p>
-          <button class="primary" type="button" id="addBaselineFromSettings" style="margin-top:12px">自己ベストを登録</button>
-        </article>
-        <article class="card">
-          <div class="record-title">ヘルプ</div>
-          <p class="record-meta">最初の自己ベストを登録するチュートリアルをもう一度開きます。</p>
-          <button class="secondary" type="button" id="openHelpFromSettings" style="margin-top:12px">チュートリアルを開く</button>
-        </article>
-        <article class="card">
-          <div class="record-title">データ保存</div>
-          <p class="record-meta">記録はこのブラウザに保存されます。別端末との同期はまだありません。</p>
-        </article>
-        <article class="card danger-zone">
-          <div class="record-title">データの初期化</div>
-          <p class="record-meta">この端末に保存されている記録、自己ベスト、種目、目標、プロフィールを削除します。</p>
-          <button class="danger" type="button" id="resetDataButton" style="margin-top:12px">データを初期化</button>
-        </article>
-      </div>
-    </div>
-  </dialog>
-
   <dialog id="profileDialog">
     <form method="dialog" class="modal-body" id="profileForm">
       <div class="modal-head">
@@ -1515,38 +1455,6 @@
         <label>所属<input id="affiliation" autocomplete="off" placeholder="〇〇陸上部"></label>
         <label>メイン種目<select id="mainEvent"></select></label>
         <button class="primary" id="saveProfile" value="default">保存する</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="goalDialog">
-    <form method="dialog" class="modal-body" id="goalForm">
-      <div class="modal-head">
-        <div>
-          <h2>目標設定</h2>
-          <p class="sub" id="goalEventName"></p>
-        </div>
-        <button class="icon-btn" type="button" id="closeGoalDialog" title="閉じる">×</button>
-      </div>
-      <div class="form-grid">
-        <input id="goalEventId" type="hidden">
-        <label>目標記録
-          <input id="goalValue" type="hidden">
-          <div class="time-input" id="goalTimeInput">
-            <input class="long-only" id="goalMinutes" data-next="goalSeconds" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="04" aria-label="分">
-            <span class="time-separator long-only">:</span>
-            <input id="goalSeconds" data-next="goalHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="30" aria-label="秒">
-            <span class="time-separator">.</span>
-            <input id="goalHundredths" inputmode="numeric" autocomplete="off" maxlength="2" required placeholder="00" aria-label="小数">
-          </div>
-        </label>
-        <label>期限
-          <input id="goalDeadline" type="date">
-        </label>
-        <label>メモ
-          <textarea id="goalMemo" placeholder="夏の大会までに、など"></textarea>
-        </label>
-        <button class="primary" id="saveGoal" value="default">保存する</button>
       </div>
     </form>
   </dialog>
@@ -1596,10 +1504,8 @@
 
     let state = loadState();
     let activeView = "home";
-    let activeEventId = state.profile.mainEventId || (state.events[0] && state.events[0].id) || "";
     let recordFilter = "all";
     let yearFilter = "all";
-    let homeYearFilter = String(new Date().getFullYear());
     let categoryFilter = "all";
     let pbOnlyFilter = false;
     let competitionSearch = "";
@@ -1641,12 +1547,6 @@
         tags,
         competitions: [],
         records: [],
-        goals: [
-          { id: uid("goal"), eventId: events[0].id, targetValue: 12.40, deadline: "2026-08-31", memo: "" },
-          { id: uid("goal"), eventId: events[1].id, targetValue: 60.50, deadline: "2026-08-31", memo: "" },
-          { id: uid("goal"), eventId: events[2].id, targetValue: 295.00, deadline: "2026-08-31", memo: "" },
-          { id: uid("goal"), eventId: events[3].id, targetValue: 1135.00, deadline: "2026-08-31", memo: "" }
-        ],
         lastEventId: events[0].id
       };
       seedRecordRows.forEach(row => {
@@ -1687,7 +1587,6 @@
         tags: seedTags.map(name => ({ id: uid("tag"), name })),
         competitions: [],
         records: [],
-        goals: [],
         lastEventId: ""
       };
     }
@@ -1730,12 +1629,6 @@
       return recordsForEvent(eventId)
         .filter(record => includeWindAssisted || !isWindAssisted(record))
         .reduce((best, record) => better(event, record.recordValue, best && best.recordValue) ? record : best, null);
-    }
-
-    function previousPbRecord(eventId, recordId) {
-      const pbs = recordsForEvent(eventId).filter(record => record.isPb);
-      const index = pbs.findIndex(record => record.id === recordId);
-      return index > 0 ? pbs[index - 1] : null;
     }
 
     function compareByRecordValue(a, b) {
@@ -1889,11 +1782,6 @@
       setTimeInputMode("record", isLongTrackEventName(currentRecordEventName()));
     }
 
-    function updateGoalTimeMode() {
-      const event = eventById(document.getElementById("goalEventId").value);
-      setTimeInputMode("goal", isLongTrackEventName(event && event.name));
-    }
-
     function onlyDigits(value) {
       return String(value || "").replace(/\D/g, "").slice(0, 2);
     }
@@ -1975,35 +1863,12 @@
         .replaceAll(">", "&gt;");
     }
 
-    function goalForEvent(eventId) {
-      return state.goals.find(goal => goal.eventId === eventId);
-    }
-
-    function goalDiff(event, pb, goal) {
-      if (!pb || !goal) return "-";
-      const diff = event.eventType === "time" || event.eventType === "relay"
-        ? pb.recordValue - goal.targetValue
-        : goal.targetValue - pb.recordValue;
-      if (diff <= 0) return "達成";
-      return event.unit === "sec" ? `あと${formatSeconds(diff)}` : `あと${diff.toFixed(2)}m`;
-    }
-
-    function achievement(event, pb, goal) {
-      if (!pb || !goal) return 0;
-      if (event.eventType === "time" || event.eventType === "relay") {
-        const start = Math.max(goal.targetValue + 1, pb.recordValue + .01);
-        return Math.max(0, Math.min(100, 100 - ((pb.recordValue - goal.targetValue) / (start - goal.targetValue)) * 100));
-      }
-      return Math.max(0, Math.min(100, (pb.recordValue / goal.targetValue) * 100));
-    }
-
     function render() {
       recomputePbs();
       renderHome();
       renderRecords();
       renderSettings();
       populateSelects();
-      drawChartSoon();
     }
 
     function renderHome() {
@@ -2039,34 +1904,6 @@
       `;
     }
 
-    function bestRecordForYear(eventId, year) {
-      const event = eventById(eventId);
-      if (!event) return null;
-      const records = recordsForEvent(eventId).filter(record => year === "all" || record.measuredAt.startsWith(year));
-      return records
-        .filter(record => !isWindAssisted(record))
-        .reduce((best, record) => better(event, record.recordValue, best && best.recordValue) ? record : best, null);
-    }
-
-    function bestDigestCard(item) {
-      const previous = previousPbRecord(item.event.id, item.record.id);
-      const isPersonalBest = item.record.isPb;
-      const meta = isPersonalBest
-        ? `前回より ${diffText(item.event, previous && previous.recordValue, item.record.recordValue)}`
-        : `${homeYearFilter === "all" ? "ベスト記録" : `${homeYearFilter}年のベスト`}`;
-      return `
-        <article class="card record-card" role="button" tabindex="0" onclick="openRecordDetail('${item.record.id}')" onkeydown="if(event.key === 'Enter'){openRecordDetail('${item.record.id}')}">
-          <div>
-            <div class="date">${dateText(item.record.measuredAt)} / ${competitionName(item.record) || "記録"}</div>
-            <div class="record-title">${item.event.name}</div>
-            <div class="record-meta">${meta}</div>
-          </div>
-          <div class="record-value">${formatValue(item.event, item.record.recordValue)}</div>
-          <div class="badges"><span class="badge ${isPersonalBest ? "pb" : ""}">${isPersonalBest ? "PB" : "年ベスト"}</span></div>
-        </article>
-      `;
-    }
-
     function recordCard(record) {
       const event = eventById(record.eventId);
       if (!event) return "";
@@ -2089,25 +1926,6 @@
             ${record.tags.map(tag => `<span class="badge">${tag}</span>`).join("")}
             ${record.imageUrl ? `<span class="badge">画像</span>` : ""}
           </div>
-        </article>
-      `;
-    }
-
-    function pbCard(record) {
-      const event = eventById(record.eventId);
-      if (!event) return "";
-      const eventRecords = recordsForEvent(event.id).filter(item => item.isPb);
-      const index = eventRecords.findIndex(item => item.id === record.id);
-      const previous = index > 0 ? eventRecords[index - 1] : null;
-      return `
-        <article class="card record-card">
-          <div>
-            <div class="date">${dateText(record.measuredAt)} / ${competitionName(record) || "記録"}</div>
-            <div class="record-title">${event.name}</div>
-            <div class="record-meta">${diffText(event, previous && previous.recordValue, record.recordValue)}</div>
-          </div>
-          <div class="record-value">${formatValue(event, record.recordValue)}</div>
-          <div class="badges"><span class="badge pb">PB</span></div>
         </article>
       `;
     }
@@ -2238,33 +2056,6 @@
       return items.length ? items.join(" ・ ") : "すべての記録";
     }
 
-    function renderGoals() {
-      const events = activeEvents();
-      document.getElementById("goalsView").innerHTML = `
-        <div class="section-head"><h2>目標管理</h2></div>
-        ${events.length ? `<div class="grid">
-          ${events.map(event => {
-            const pb = bestRecord(event.id);
-            const goal = goalForEvent(event.id);
-            const pct = achievement(event, pb, goal);
-            return `<article class="card goal-row">
-              <button onclick="editGoal('${event.id}')">
-                <div class="record-title">${event.name}</div>
-                <div class="record-meta">目標 ${goal ? formatValue(event, goal.targetValue) : "未設定"} / 現在PB ${pb ? formatValue(event, pb.recordValue) : "-"}</div>
-                <div class="progress"><span style="width:${pct}%"></span></div>
-              </button>
-              <div class="event-stat">${goalDiff(event, pb, goal)}<small>${Math.round(pct)}%</small></div>
-            </article>`;
-          }).join("")}
-        </div>` : `<div class="empty">
-          目標を設定するには、まず記録を追加してください。
-          <div class="empty-actions">
-            <button class="primary" onclick="openRecordDialog()">記録追加</button>
-          </div>
-        </div>`}
-      `;
-    }
-
     function renderSettings() {
       const events = activeEvents();
       swipeRowState = null;
@@ -2310,7 +2101,7 @@
             </article>
             <article class="card danger-zone">
               <div class="record-title">データの初期化</div>
-              <p class="record-meta">この端末に保存されている記録、自己ベスト、種目、目標、プロフィールを削除します。</p>
+              <p class="record-meta">この端末に保存されている記録、自己ベスト、種目、プロフィールを削除します。</p>
               <button class="danger" style="margin-top:12px" onclick="resetData()">初期化</button>
             </article>
           </div>
@@ -2486,101 +2277,6 @@
       }
     }
 
-    function drawChartSoon() {
-      requestAnimationFrame(drawChart);
-    }
-
-    function drawChart() {
-      const canvas = document.getElementById("growthChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      const event = eventById(activeEventId);
-      if (!event) return;
-      const rootStyle = getComputedStyle(document.documentElement);
-      const chartColors = {
-        white: rootStyle.getPropertyValue("--white").trim(),
-        line: rootStyle.getPropertyValue("--line").trim(),
-        muted: rootStyle.getPropertyValue("--muted").trim(),
-        primary: rootStyle.getPropertyValue("--primary").trim(),
-        ink: rootStyle.getPropertyValue("--ink").trim(),
-        pb: rootStyle.getPropertyValue("--pb").trim(),
-        pbText: rootStyle.getPropertyValue("--pb-text").trim()
-      };
-      const records = recordsForEvent(activeEventId);
-      const goal = goalForEvent(activeEventId);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = chartColors.white;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = chartColors.line;
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 5; i++) {
-        const y = 24 + i * 40;
-        ctx.beginPath();
-        ctx.moveTo(36, y);
-        ctx.lineTo(canvas.width - 14, y);
-        ctx.stroke();
-      }
-      if (!records.length) {
-        ctx.fillStyle = chartColors.muted;
-        ctx.font = "14px sans-serif";
-        ctx.fillText("記録を追加するとグラフが表示されます", 72, 116);
-        return;
-      }
-      const values = records.map(record => record.recordValue).concat(goal ? [goal.targetValue] : []);
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const pad = Math.max((max - min) * .18, event.unit === "sec" ? .2 : .1);
-      const low = min - pad;
-      const high = max + pad;
-      const xFor = index => 42 + (records.length === 1 ? 0 : index * ((canvas.width - 70) / (records.length - 1)));
-      const yFor = value => 196 - ((value - low) / (high - low)) * 160;
-
-      if (goal) {
-        const y = yFor(goal.targetValue);
-        ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = chartColors.pb;
-        ctx.beginPath();
-        ctx.moveTo(36, y);
-        ctx.lineTo(canvas.width - 14, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = chartColors.pbText;
-        ctx.font = "12px sans-serif";
-        ctx.fillText("目標", canvas.width - 48, y - 6);
-      }
-
-      ctx.strokeStyle = chartColors.primary;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      records.forEach((record, index) => {
-        const x = xFor(index);
-        const y = yFor(record.recordValue);
-        if (index === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      let best = null;
-      ctx.strokeStyle = chartColors.ink;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      records.forEach((record, index) => {
-        if (!isWindAssisted(record) && better(event, record.recordValue, best)) best = record.recordValue;
-        const x = xFor(index);
-        const y = yFor(best || record.recordValue);
-        if (index === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-
-      records.forEach((record, index) => {
-        ctx.fillStyle = record.isPb ? chartColors.pb : chartColors.primary;
-        ctx.beginPath();
-        ctx.arc(xFor(index), yFor(record.recordValue), record.isPb ? 5 : 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
     function switchView(view) {
       activeView = view;
       if (view === "settings" || settingsPanel !== "menu") {
@@ -2590,7 +2286,6 @@
       document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
       document.getElementById(`${view}View`).classList.add("active");
       document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
-      drawChartSoon();
     }
 
     function setRecordFilter(filter) {
@@ -2603,11 +2298,6 @@
       yearFilter = filter;
       renderRecords();
       renderFilterSheet();
-    }
-
-    function setHomeYearFilter(filter) {
-      homeYearFilter = filter;
-      renderHome();
     }
 
     function setCategoryFilter(filter) {
@@ -2650,7 +2340,6 @@
     function resetRecordFilters() {
       recordFilter = "all";
       yearFilter = "all";
-      homeYearFilter = String(new Date().getFullYear());
       categoryFilter = "all";
       pbOnlyFilter = false;
       competitionSearch = "";
@@ -2778,12 +2467,6 @@
         });
       }
       document.getElementById("recordDialog").showModal();
-      setTimeout(() => {
-        const target = activeEvents().length
-          ? document.getElementById(document.getElementById("recordTimeInput").classList.contains("long") ? "recordMinutes" : "recordSeconds")
-          : document.getElementById("recordNewEventName");
-        target.focus();
-      }, 60);
     }
 
     function openProfileDialog() {
@@ -2793,20 +2476,6 @@
       document.getElementById("affiliation").value = state.profile.affiliation || "";
       populateSelects();
       document.getElementById("profileDialog").showModal();
-    }
-
-    function openGoalDialog(eventId) {
-      const event = eventById(eventId);
-      if (!event) return;
-      const goal = goalForEvent(eventId);
-      document.getElementById("goalForm").reset();
-      document.getElementById("goalEventId").value = eventId;
-      document.getElementById("goalEventName").textContent = event.name;
-      setTimePartsValue("goal", goal ? goal.targetValue : NaN, isLongTrackEventName(event.name));
-      document.getElementById("goalDeadline").value = goal ? goal.deadline || "" : "";
-      document.getElementById("goalMemo").value = goal ? goal.memo || "" : "";
-      document.getElementById("goalDialog").showModal();
-      setTimeout(() => document.getElementById(document.getElementById("goalTimeInput").classList.contains("long") ? "goalMinutes" : "goalSeconds").focus(), 60);
     }
 
     function fileToDataUrl(file) {
@@ -2900,11 +2569,10 @@
     }
 
     function showPbModal(event, previous, current) {
-      const goal = goalForEvent(event.id);
       document.getElementById("pbMessage").textContent = `${event.name} ${diffText(event, previous && previous.recordValue, current.recordValue)}`;
       document.getElementById("newPb").textContent = formatValue(event, current.recordValue);
       document.getElementById("oldPb").textContent = previous ? formatValue(event, previous.recordValue) : "-";
-      document.getElementById("pbDetail").textContent = `${competitionName(current) || "記録"} / ${goalDiff(event, current, goal)}`;
+      document.getElementById("pbDetail").textContent = competitionName(current) || "記録";
       document.getElementById("pbDialog").showModal();
     }
 
@@ -2923,16 +2591,7 @@
       };
       state.events.push(newEvent);
       if (!state.profile.mainEventId) state.profile.mainEventId = newEvent.id;
-      activeEventId = newEvent.id;
       return newEvent;
-    }
-
-    function setMainEvent(eventId) {
-      if (!eventById(eventId)) return;
-      state.profile.mainEventId = eventId;
-      activeEventId = eventId;
-      saveState();
-      render();
     }
 
     function deleteEvent(eventId) {
@@ -2940,17 +2599,15 @@
       if (!event) return;
       const count = state.records.filter(record => record.eventId === eventId).length;
       const message = count
-        ? `${event.name}を削除しますか？ この種目の記録${count}件と目標も削除されます。`
+        ? `${event.name}を削除しますか？ この種目の記録${count}件も削除されます。`
         : `${event.name}を削除しますか？`;
       if (!confirm(message)) return;
       state.events = state.events.filter(item => item.id !== eventId);
       state.records = state.records.filter(record => record.eventId !== eventId);
-      state.goals = state.goals.filter(goal => goal.eventId !== eventId);
       const usedCompetitionIds = new Set(state.records.map(record => record.competitionId).filter(Boolean));
       state.competitions = state.competitions.filter(competition => usedCompetitionIds.has(competition.id));
       if (state.profile.mainEventId === eventId) state.profile.mainEventId = (activeEvents()[0] && activeEvents()[0].id) || "";
       if (state.lastEventId === eventId) state.lastEventId = state.profile.mainEventId;
-      activeEventId = state.profile.mainEventId || (activeEvents()[0] && activeEvents()[0].id) || "";
       recordFilter = state.events.some(item => item.id === recordFilter) ? recordFilter : "all";
       saveState();
       render();
@@ -2964,37 +2621,11 @@
       document.getElementById("recordDialog").close();
     }
 
-    function editGoal(eventId) {
-      openGoalDialog(eventId);
-    }
-
-    function saveGoalFromForm(event) {
-      event.preventDefault();
-      const eventId = document.getElementById("goalEventId").value;
-      const goal = goalForEvent(eventId);
-      updateGoalTimeMode();
-      const value = timePartsValue("goal");
-      if (!Number.isFinite(value)) return;
-      const deadline = document.getElementById("goalDeadline").value;
-      const memo = document.getElementById("goalMemo").value.trim();
-      if (goal) {
-        goal.targetValue = value;
-        goal.deadline = deadline;
-        goal.memo = memo;
-      } else {
-        state.goals.push({ id: uid("goal"), eventId, targetValue: value, deadline, memo });
-      }
-      saveState();
-      document.getElementById("goalDialog").close();
-      render();
-    }
-
     function performResetData() {
       localStorage.removeItem(storeKey);
       localStorage.removeItem(onboardingKey);
       state = createEmptyState();
       saveState();
-      activeEventId = state.profile.mainEventId || "";
       recordFilter = "all";
       yearFilter = "all";
       categoryFilter = "all";
@@ -3002,7 +2633,6 @@
       competitionSearch = "";
       sortOrder = "newest";
       settingsPanel = "menu";
-      closeSettingsDialog();
       render();
       switchView("home");
       showOnboarding(false);
@@ -3017,10 +2647,8 @@
       if (state.records.length && !confirm("現在のデータをサンプルデータに置き換えますか？")) return;
       state = createSampleState();
       saveState();
-      activeEventId = state.profile.mainEventId || "";
       recordFilter = "all";
       yearFilter = "all";
-      homeYearFilter = "2026";
       categoryFilter = "all";
       pbOnlyFilter = false;
       competitionSearch = "";
@@ -3035,7 +2663,6 @@
       baselineReturnPanel = settingsPanel;
       closeOnboarding(true);
       closeOnboardingDone();
-      closeSettingsDialog();
       onboardingRecordMode = true;
       openRecordDialog();
     }
@@ -3053,11 +2680,6 @@
         }
         switchView(returnView);
       }
-    }
-
-    function openSettingsFromOnboarding() {
-      closeOnboarding(true);
-      switchView("settings");
     }
 
     function showOnboarding(markSeen = false) {
@@ -3088,20 +2710,6 @@
       if (dialog.open) dialog.close();
     }
 
-    function openSettingsDialog() {
-      document.getElementById("settingsDialog").showModal();
-    }
-
-    function closeSettingsDialog() {
-      const dialog = document.getElementById("settingsDialog");
-      if (dialog.open) dialog.close();
-    }
-
-    function openHelpFromSettings() {
-      closeSettingsDialog();
-      showOnboarding(false);
-    }
-
     function hideSplashSoon() {
       const splash = document.getElementById("splashScreen");
       if (!splash) return;
@@ -3113,10 +2721,6 @@
       btn.addEventListener("click", () => switchView(btn.dataset.view));
     });
     document.getElementById("addRecordFab").addEventListener("click", openRecordDialog);
-    document.getElementById("closeSettingsDialog").addEventListener("click", closeSettingsDialog);
-    document.getElementById("openHelpFromSettings").addEventListener("click", openHelpFromSettings);
-    document.getElementById("addBaselineFromSettings").addEventListener("click", startOnboardingRecord);
-    document.getElementById("resetDataButton").addEventListener("click", resetData);
     document.getElementById("closeOnboarding").addEventListener("click", () => closeOnboarding());
     document.getElementById("finishOnboarding").addEventListener("click", () => closeOnboarding());
     document.getElementById("startWithSample").addEventListener("click", startOnboardingRecord);
@@ -3129,9 +2733,6 @@
     document.getElementById("closeRecordDetailDialog").addEventListener("click", closeRecordDetail);
     document.getElementById("editRecordFromDetail").addEventListener("click", editRecordFromDetail);
     document.getElementById("deleteRecordFromDetail").addEventListener("click", deleteRecordFromDetail);
-    document.getElementById("closeGoalDialog").addEventListener("click", () => {
-      document.getElementById("goalDialog").close();
-    });
     document.getElementById("closeFilterDialog").addEventListener("click", closeFilterDialog);
     document.getElementById("recordForm").addEventListener("submit", saveRecordFromForm);
     document.getElementById("recordEvent").addEventListener("change", () => {
@@ -3139,11 +2740,10 @@
       updateRecordTimeMode();
     });
     document.getElementById("recordNewEventName").addEventListener("input", updateRecordTimeMode);
-    ["recordMinutes", "recordSeconds", "recordHundredths", "goalMinutes", "goalSeconds", "goalHundredths"].forEach(id => {
+    ["recordMinutes", "recordSeconds", "recordHundredths"].forEach(id => {
       document.getElementById(id).addEventListener("input", handleTimePartInput);
     });
     document.getElementById("deleteRecord").addEventListener("click", deleteRecord);
-    document.getElementById("goalForm").addEventListener("submit", saveGoalFromForm);
     document.getElementById("profileForm").addEventListener("submit", event => {
       event.preventDefault();
       state.profile.name = document.getElementById("profileName").value.trim() || "Athlete";
@@ -3151,7 +2751,6 @@
       state.profile.gender = document.getElementById("gender").value;
       state.profile.affiliation = document.getElementById("affiliation").value.trim();
       state.profile.mainEventId = document.getElementById("mainEvent").value;
-      activeEventId = state.profile.mainEventId || (activeEvents()[0] && activeEvents()[0].id) || "";
       saveState();
       document.getElementById("profileDialog").close();
       render();
@@ -3171,7 +2770,6 @@
     window.switchView = switchView;
     window.setRecordFilter = setRecordFilter;
     window.setYearFilter = setYearFilter;
-    window.setHomeYearFilter = setHomeYearFilter;
     window.setCategoryFilter = setCategoryFilter;
     window.togglePbOnly = togglePbOnly;
     window.setCompetitionSearch = setCompetitionSearch;
@@ -3180,16 +2778,12 @@
     window.closeFilterDialog = closeFilterDialog;
     window.resetRecordFilters = resetRecordFilters;
     window.openProfileDialog = openProfileDialog;
-    window.openGoalDialog = openGoalDialog;
-    window.setMainEvent = setMainEvent;
     window.deleteEvent = deleteEvent;
     window.deleteRecord = deleteRecord;
-    window.editGoal = editGoal;
     window.resetData = resetData;
     window.loadSampleData = loadSampleData;
     window.showOnboarding = showOnboarding;
     window.startOnboardingRecord = startOnboardingRecord;
-    window.openSettingsDialog = openSettingsDialog;
     window.openSettingsPanel = openSettingsPanel;
     window.startSwipeRow = startSwipeRow;
     window.moveSwipeRow = moveSwipeRow;
@@ -3198,6 +2792,12 @@
     render();
     hideSplashSoon();
     maybeShowOnboarding();
+    let lastTouchEnd = 0;
+    document.addEventListener("touchend", event => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js").catch(() => {});
